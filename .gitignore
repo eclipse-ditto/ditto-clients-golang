@@ -1,0 +1,10 @@
+.checkstyle
+.classpath
+.idea
+.flattened-pom.xml
+*.iml
+.project
+.settings
+.metadata
+.vscode/
+target/
