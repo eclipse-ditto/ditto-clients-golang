@@ -29,7 +29,7 @@ listed source code repository logs.
 
 # Third-party Content
 
-This software includes third party content listed in [NOTICE-THIRD-PARTY.md](NOTICE-THIRD-PARTY.md)
+This software uses third party content AS-IS listed in [NOTICE-THIRD-PARTY.md](NOTICE-THIRD-PARTY.md)
 
 # Cryptography
 
