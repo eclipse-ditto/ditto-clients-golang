@@ -14,8 +14,9 @@ package model
 // Feature represents the Feature entity defined by the Ditto's Things specification.
 // It is used to manage all data and functionality of a Thing that can be clustered in an outlined technical context.
 type Feature struct {
-	Definition []*DefinitionID        `json:"definition,omitempty"`
-	Properties map[string]interface{} `json:"properties,omitempty"`
+	Definition        []*DefinitionID        `json:"definition,omitempty"`
+	Properties        map[string]interface{} `json:"properties,omitempty"`
+	DesiredProperties map[string]interface{} `json:"desiredProperties,omitempty"`
 }
 
 // WithDefinitionFrom is an auxiliary method to set the Feature's definition from an array of strings converted into the proper DefinitionID instances.
@@ -26,6 +27,21 @@ func (feature *Feature) WithDefinitionFrom(definition ...string) *Feature {
 			feature.Definition[i] = NewDefinitionIDFrom(def)
 		}
 	}
+	return feature
+}
+
+// WithDesiredProperties sets all desired properties of the current Feature instance.
+func (feature *Feature) WithDesiredProperties(properties map[string]interface{}) *Feature {
+	feature.DesiredProperties = properties
+	return feature
+}
+
+// WithDesiredProperty sets/adds a desired property to the current Feature instance.
+func (feature *Feature) WithDesiredProperty(id string, value interface{}) *Feature {
+	if feature.DesiredProperties == nil {
+		feature.DesiredProperties = make(map[string]interface{})
+	}
+	feature.DesiredProperties[id] = value
 	return feature
 }
 

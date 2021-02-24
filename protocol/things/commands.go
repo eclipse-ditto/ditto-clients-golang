@@ -18,16 +18,18 @@ import (
 )
 
 const (
-	pathThing                        = "/"
-	pathThingDefinition              = "/definition"
-	pathThingPolicyID                = "/policyId"
-	pathThingFeatures                = "/features"
-	pathThingAttributes              = "/attributes"
-	pathThingAttributeFormat         = pathThingAttributes + "/%s"
-	pathThingFeatureFormat           = pathThingFeatures + "/%s"
-	pathThingFeatureDefinitionFormat = pathThingFeatureFormat + "/definition"
-	pathThingFeaturePropertiesFormat = pathThingFeatureFormat + "/properties"
-	pathThingFeaturePropertyFormat   = pathThingFeaturePropertiesFormat + "/%s"
+	pathThing                               = "/"
+	pathThingDefinition                     = "/definition"
+	pathThingPolicyID                       = "/policyId"
+	pathThingFeatures                       = "/features"
+	pathThingAttributes                     = "/attributes"
+	pathThingAttributeFormat                = pathThingAttributes + "/%s"
+	pathThingFeatureFormat                  = pathThingFeatures + "/%s"
+	pathThingFeatureDefinitionFormat        = pathThingFeatureFormat + "/definition"
+	pathThingFeaturePropertiesFormat        = pathThingFeatureFormat + "/properties"
+	pathThingFeaturePropertyFormat          = pathThingFeaturePropertiesFormat + "/%s"
+	pathThingFeatureDesiredPropertiesFormat = pathThingFeatureFormat + "/desiredProperties"
+	pathThingFeatureDesiredPropertyFormat   = pathThingFeatureDesiredPropertiesFormat + "/%s"
 )
 
 // Command represents a message entity defined by the Ditto protocol for the Things group that defines the execution of a certain action.
@@ -123,9 +125,10 @@ func (cmd *Command) Attributes() *Command {
 	return cmd
 }
 
-// Attribute configures the command to affect a specified by the provided attributeID attribute of the Thing.
-func (cmd *Command) Attribute(attributeID string) *Command {
-	cmd.Path = fmt.Sprintf(pathThingAttributeFormat, attributeID)
+// Attribute configures the command to affect a specified Thing's attribute
+// defined by the provided attributePath as JSON pointer path (https://tools.ietf.org/html/rfc6901).
+func (cmd *Command) Attribute(attributePath string) *Command {
+	cmd.Path = fmt.Sprintf(pathThingAttributeFormat, attributePath)
 	return cmd
 }
 
@@ -153,9 +156,24 @@ func (cmd *Command) FeatureProperties(featureID string) *Command {
 	return cmd
 }
 
-// FeatureProperty configures the command to affect a specified property via the provided propertyID of a specified by the provided featureID feature of the Thing.
-func (cmd *Command) FeatureProperty(featureID, propertyID string) *Command {
-	cmd.Path = fmt.Sprintf(pathThingFeaturePropertyFormat, featureID, propertyID)
+// FeatureProperty configures the command to affect a specified Thing's property property via the provided
+// propertyPath as JSON pointer path (https://tools.ietf.org/html/rfc6901).
+func (cmd *Command) FeatureProperty(featureID, propertyPath string) *Command {
+	cmd.Path = fmt.Sprintf(pathThingFeaturePropertyFormat, featureID, propertyPath)
+	return cmd
+}
+
+// FeatureDesiredProperties configures the command to affect all desired properties of a specified
+// by the provided featureID feature of the Thing.
+func (cmd *Command) FeatureDesiredProperties(featureID string) *Command {
+	cmd.Path = fmt.Sprintf(pathThingFeatureDesiredPropertiesFormat, featureID)
+	return cmd
+}
+
+// FeatureDesiredProperty configures the command to affect a specified desired property via the provided featureID feature
+// of the Thing and the propertyPath as JSON pointer path (https://tools.ietf.org/html/rfc6901).
+func (cmd *Command) FeatureDesiredProperty(featureID, propertyPath string) *Command {
+	cmd.Path = fmt.Sprintf(pathThingFeatureDesiredPropertyFormat, featureID, propertyPath)
 	return cmd
 }
 
@@ -171,9 +189,9 @@ func (cmd *Command) Twin() *Command {
 	return cmd
 }
 
-// Message generates the Ditto message applying all configurations and optionally all Headers provided.
-func (cmd *Command) Message(headerOpts ...protocol.HeaderOpt) *protocol.Message {
-	msg := &protocol.Message{
+// Envelope generates the Ditto message applying all configurations and optionally all Headers provided.
+func (cmd *Command) Envelope(headerOpts ...protocol.HeaderOpt) *protocol.Envelope {
+	msg := &protocol.Envelope{
 		Topic: cmd.Topic,
 		Path:  cmd.Path,
 		Value: cmd.Payload,
