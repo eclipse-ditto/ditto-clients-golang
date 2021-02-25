@@ -22,7 +22,7 @@ func (client *Client) defaultMessageHandler(mqttClient MQTT.Client, message MQTT
 
 func (client *Client) honoMessageHandler(mqttClient MQTT.Client, message MQTT.Message) {
 	DEBUG.Printf("received Hono message for client subscription: %v", message)
-	dittoMsg, err := getMessage(message.Payload())
+	dittoMsg, err := getEnvelope(message.Payload())
 	if err != nil {
 		ERROR.Printf("error getting Ditto message: %v", err)
 		return

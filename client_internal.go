@@ -79,7 +79,7 @@ func (client *Client) notifyClientConnectionLost(err error) {
 	}
 }
 
-func (client *Client) publish(topic string, message *protocol.Message, qos byte, retained bool) error {
+func (client *Client) publish(topic string, message *protocol.Envelope, qos byte, retained bool) error {
 	payload, err := json.Marshal(message)
 	if err != nil {
 		return err

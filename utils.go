@@ -36,8 +36,8 @@ func generateHonoResponseTopic(requestID string, status int) string {
 	return fmt.Sprintf(honoMQTTTopicCommandResponseFormat, requestID, status)
 }
 
-func getMessage(mqttPayload []byte) (*protocol.Message, error) {
-	env := &protocol.Message{}
+func getEnvelope(mqttPayload []byte) (*protocol.Envelope, error) {
+	env := &protocol.Envelope{}
 	if err := json.Unmarshal(mqttPayload, env); err != nil {
 		return nil, err
 	}

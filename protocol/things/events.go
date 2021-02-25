@@ -85,9 +85,10 @@ func (event *Event) Attributes() *Event {
 	return event
 }
 
-// Attribute configures the Event to notify for a change in the Thing's attribute defined by the provided attributeID.
-func (event *Event) Attribute(attributeID string) *Event {
-	event.Path = fmt.Sprintf(pathThingAttributeFormat, attributeID)
+// Attribute configures the Event to notify for a change in the Thing's attribute defined by the provided attributePath
+// as JSON pointer path (https://tools.ietf.org/html/rfc6901).
+func (event *Event) Attribute(attributePath string) *Event {
+	event.Path = fmt.Sprintf(pathThingAttributeFormat, attributePath)
 	return event
 }
 
@@ -115,9 +116,24 @@ func (event *Event) FeatureProperties(featureID string) *Event {
 	return event
 }
 
-// FeatureProperty configures the Event to notify for a change in the Thing's feature's property defined by the provided featureID and propertyID.
-func (event *Event) FeatureProperty(featureID, propertyID string) *Event {
-	event.Path = fmt.Sprintf(pathThingFeaturePropertyFormat, featureID, propertyID)
+// FeatureProperty configures the Event to notify for a change in the Thing's feature's property defined by the provided
+// propertyPath as JSON pointer path (https://tools.ietf.org/html/rfc6901).
+func (event *Event) FeatureProperty(featureID, propertyPath string) *Event {
+	event.Path = fmt.Sprintf(pathThingFeaturePropertyFormat, featureID, propertyPath)
+	return event
+}
+
+// FeatureDesiredProperties configures the Event to notify for a change in the Thing's feature's desired properties
+// of the feature defined by the provided featureID.
+func (event *Event) FeatureDesiredProperties(featureID string) *Event {
+	event.Path = fmt.Sprintf(pathThingFeatureDesiredPropertiesFormat, featureID)
+	return event
+}
+
+// FeatureDesiredProperty configures the Event to notify for a change in the Thing's feature's desired property
+// defined by the provided featureID and propertyPath as JSON pointer path (https://tools.ietf.org/html/rfc6901).
+func (event *Event) FeatureDesiredProperty(featureID, propertyPath string) *Event {
+	event.Path = fmt.Sprintf(pathThingFeatureDesiredPropertyFormat, featureID, propertyPath)
 	return event
 }
 
@@ -133,9 +149,9 @@ func (event *Event) Twin() *Event {
 	return event
 }
 
-// Message generates the Ditto message applying all configurations and optionally all Headers provided.
-func (event *Event) Message(headerOpts ...protocol.HeaderOpt) *protocol.Message {
-	msg := &protocol.Message{
+// Envelope generates the Ditto message applying all configurations and optionally all Headers provided.
+func (event *Event) Envelope(headerOpts ...protocol.HeaderOpt) *protocol.Envelope {
+	msg := &protocol.Envelope{
 		Topic: event.Topic,
 		Path:  event.Path,
 		Value: event.Payload,

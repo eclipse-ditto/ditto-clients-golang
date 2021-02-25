@@ -81,9 +81,9 @@ func (msg *Message) Feature(featureID string) *Message {
 	return msg
 }
 
-// Message generates the Ditto message applying all configurations and optionally all Headers provided.
-func (msg *Message) Message(headerOpts ...protocol.HeaderOpt) *protocol.Message {
-	res := &protocol.Message{
+// Envelope generates the Ditto message applying all configurations and optionally all Headers provided.
+func (msg *Message) Envelope(headerOpts ...protocol.HeaderOpt) *protocol.Envelope {
+	res := &protocol.Envelope{
 		Topic: msg.Topic,
 		Path:  fmt.Sprintf(pathMessagesFormat, msg.AddressedPartOfThing, msg.Mailbox, msg.Subject),
 		Value: msg.Payload,

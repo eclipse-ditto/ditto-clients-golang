@@ -25,9 +25,9 @@ const (
 )
 
 // Handler represents a callback handler that is called on each received message.
-// If the underlying transport (e.g. Hono) provides a special requestID related to the Message,
+// If the underlying transport (e.g. Hono) provides a special requestID related to the Envelope,
 // it's also provided to the handler so that chained responses to the ID can be later sent properly.
-type Handler func(requestID string, message *protocol.Message)
+type Handler func(requestID string, message *protocol.Envelope)
 
 // Client is the Ditto's library actual client's imple,entation.
 // It provides the connect/disconnect capabilities along with the options to subscribe/unsubscribe
@@ -89,18 +89,18 @@ func (client *Client) Disconnect() {
 	client.pahoClient.Disconnect(uint(client.cfg.disconnectTimeout.Milliseconds()))
 }
 
-// Reply is an auxiliary method to send replies for specific requestIDs if such has been provided along with the incoming protocol.Message.
-// The requestID must be the same as the one provided with the request protocol.Message.
+// Reply is an auxiliary method to send replies for specific requestIDs if such has been provided along with the incoming protocol.Envelope.
+// The requestID must be the same as the one provided with the request protocol.Envelope.
 // An error is returned if the reply could not be sent for some reason.
-func (client *Client) Reply(requestID string, message *protocol.Message) error {
+func (client *Client) Reply(requestID string, message *protocol.Envelope) error {
 	if err := client.publish(generateHonoResponseTopic(requestID, message.Status), message, 1, false); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Send sends a protocol.Message to the Client's configured Ditto endpoint.
-func (client *Client) Send(message *protocol.Message) error {
+// Send sends a protocol.Envelope to the Client's configured Ditto endpoint.
+func (client *Client) Send(message *protocol.Envelope) error {
 	if err := client.publish(honoMQTTTopicPublishEvents, message, 1, false); err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (client *Client) Subscribe(handler Handler) {
 	client.handler = handler
 }
 
-// Unsubscribe ensures that protocol.Message-s will no longer be forwarded to the provided Handler.
+// Unsubscribe ensures that protocol.Envelope-s will no longer be forwarded to the provided Handler.
 func (client *Client) Unsubscribe() {
 	client.handlersLock.Lock()
 	defer client.handlersLock.Unlock()
