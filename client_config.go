@@ -16,6 +16,11 @@ import (
 	"time"
 )
 
+const (
+	defaultDisconnectTimeout = 250 * time.Millisecond
+	defaultKeepAlive         = 30 * time.Second
+)
+
 // ConnectHandler is called when a successful connection to the configured Ditto endpoint is established and
 // all Client's internal preparations are done.
 type ConnectHandler func(client *Client)

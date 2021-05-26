@@ -21,7 +21,14 @@ func (client *Client) defaultMessageHandler(mqttClient MQTT.Client, message MQTT
 }
 
 func (client *Client) honoMessageHandler(mqttClient MQTT.Client, message MQTT.Message) {
-	DEBUG.Printf("received Hono message for client subscription: %v", message)
+	DEBUG.Printf("received message for client subscription: %v", message)
+	client.handlersLock.RLock()
+	defer client.handlersLock.RUnlock()
+
+	if client.handlers == nil || len(client.handlers) == 0 {
+		WARN.Printf("message received, but no handlers were found")
+		return
+	}
 	dittoMsg, err := getEnvelope(message.Payload())
 	if err != nil {
 		ERROR.Printf("error getting Ditto message: %v", err)
@@ -29,13 +36,11 @@ func (client *Client) honoMessageHandler(mqttClient MQTT.Client, message MQTT.Me
 	}
 	requestID := extractHonoRequestId(message.Topic())
 	if requestID == "" {
-		DEBUG.Printf("no Hono request ID is available in the received message with topic: %s", message.Topic())
+		DEBUG.Printf("no request ID is available in the received message with topic: %s", message.Topic())
 	} else {
-		DEBUG.Printf("received a command from Hono with request ID: %s", requestID)
+		DEBUG.Printf("received a command with request ID: %s", requestID)
 	}
-	client.handlersLock.RLock()
-	defer client.handlersLock.RUnlock()
-	if client.handler != nil {
-		client.handler(requestID, dittoMsg)
+	for _, handler := range client.handlers {
+		go handler(requestID, dittoMsg)
 	}
 }

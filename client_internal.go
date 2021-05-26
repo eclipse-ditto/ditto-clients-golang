@@ -36,6 +36,10 @@ func (client *Client) clientConnectHandler(pahoClient MQTT.Client) {
 }
 
 func (client *Client) notifyClientConnected() {
+	if client.cfg == nil {
+		return
+	}
+
 	notifyChan := make(chan error, 1)
 	var notifyOnce sync.Once
 	go func() {
@@ -60,6 +64,10 @@ func (client *Client) clientConnectionLostHandler(pahoClient MQTT.Client, err er
 }
 
 func (client *Client) notifyClientConnectionLost(err error) {
+	if client.cfg == nil {
+		return
+	}
+
 	notifyChan := make(chan error, 1)
 	var notifyOnce sync.Once
 	go func() {
