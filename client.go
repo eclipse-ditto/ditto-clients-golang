@@ -12,16 +12,11 @@
 package ditto
 
 import (
+	"errors"
 	"github.com/eclipse/ditto-clients-golang/protocol"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
 	"sync"
-	"time"
-)
-
-const (
-	defaultDisconnectTimeout = 250 * time.Millisecond
-	defaultKeepAlive         = 30 * time.Second
 )
 
 // Handler represents a callback handler that is called on each received message.
@@ -29,22 +24,51 @@ const (
 // it's also provided to the handler so that chained responses to the ID can be later sent properly.
 type Handler func(requestID string, message *protocol.Envelope)
 
-// Client is the Ditto's library actual client's imple,entation.
+// Client is the Ditto's library actual client's implementation.
 // It provides the connect/disconnect capabilities along with the options to subscribe/unsubscribe
 // for receiving all Ditto messages being exchanged using the underlying transport (MQTT/WS).
 type Client struct {
-	cfg          *Configuration
-	pahoClient   MQTT.Client
-	handler      Handler
-	handlersLock sync.RWMutex
+	cfg                *Configuration
+	pahoClient         MQTT.Client
+	handlers           map[string]Handler
+	handlersLock       sync.RWMutex
+	externalMqttClient bool
 }
 
 // NewClient creates a new Client instance with the provided Configuration.
 func NewClient(cfg *Configuration) *Client {
 	client := &Client{
-		cfg: cfg,
+		cfg:      cfg,
+		handlers: map[string]Handler{},
 	}
 	return client
+}
+
+// NewClientMqtt creates a new Client instance with the Configuration, if such is provided, that is going
+// to use the external MQTT client.
+//
+// It is expected that the provided MQTT client is already connected. So this Client must be controlled
+// from outside and its Connect/Disconnect methods must be invoked accordingly.
+//
+// If a Configuration is provided it may include only ConnectHandler and ConnectionLostHandler.
+// As an external MQTT client is used, other fields are not needed and regarded as invalid ones.
+//
+// Returns an error if the provided MQTT client is not connected or the Configuration contains invalid fields.
+func NewClientMqtt(mqttClient MQTT.Client, cfg *Configuration) (*Client, error) {
+	if !mqttClient.IsConnected() {
+		return nil, errors.New("MQTT client is not connected")
+	}
+
+	if err := validateConfiguration(cfg); err != nil {
+		return nil, err
+	}
+
+	client := &Client{
+		cfg:                cfg,
+		pahoClient:         mqttClient,
+		externalMqttClient: true,
+	}
+	return client, nil
 }
 
 // Connect connects the client to the configured Ditto endpoint provided via the Client's Configuration at creation time.
@@ -52,7 +76,19 @@ func NewClient(cfg *Configuration) *Client {
 // An actual connection status is callbacked to the provided ConnectHandler
 // as soon as the connection is established and all Client's internal preparations are performed.
 // If the connection gets lost during runtime - the ConnectionLostHandler is notified to handle the case.
+//
+// When the client is created using an external MQTT client, only internal preparations are performed.
+// The Client will be functional once this method returns without error. However, for consistency, if
+// there is a provided ConnectHandler, it will be notified.
+// In the case of an external MQTT client, if any error occurs during the internal preparations - it's returned here.
 func (client *Client) Connect() error {
+	if client.externalMqttClient {
+		if token := client.pahoClient.Subscribe(honoMQTTTopicSubscribeCommands, 1, client.honoMessageHandler); token.Wait() && token.Error() != nil {
+			return token.Error()
+		}
+		go client.notifyClientConnected()
+		return nil
+	}
 
 	pahoOpts := MQTT.NewClientOptions().
 		AddBroker(client.cfg.broker).
@@ -80,13 +116,23 @@ func (client *Client) Connect() error {
 	return nil
 }
 
-// Disconnect disconnects the client from the configured Ditto endpoint.
-// A call to Disconnect will not cause a ConnectionLostHandler to be called.
+// Disconnect in the case of an external MQTT client, only undoes internal preparations, otherwise - it also disconnects
+// the client from the configured Ditto endpoint. A call to Disconnect will cause a ConnectionLostHandler to be notified
+// only if an external MQTT client is used.
 func (client *Client) Disconnect() {
 	if token := client.pahoClient.Unsubscribe(honoMQTTTopicSubscribeCommands); token.Wait() && token.Error() != nil {
+		if client.externalMqttClient && token.Error() == MQTT.ErrNotConnected {
+			go client.notifyClientConnectionLost(token.Error()) // expected: external MQTT client has already been disconnected
+			return
+		}
 		ERROR.Printf("error while disconnecting client: %v", token.Error())
 	}
-	client.pahoClient.Disconnect(uint(client.cfg.disconnectTimeout.Milliseconds()))
+
+	if client.externalMqttClient { // do not disconnect when external MQTT client, the connection should be managed only externally
+		go client.notifyClientConnectionLost(nil)
+	} else {
+		client.pahoClient.Disconnect(uint(client.cfg.disconnectTimeout.Milliseconds()))
+	}
 }
 
 // Reply is an auxiliary method to send replies for specific requestIDs if such has been provided along with the incoming protocol.Envelope.
@@ -107,17 +153,33 @@ func (client *Client) Send(message *protocol.Envelope) error {
 	return nil
 }
 
-// Subscribe ensures that all incoming Ditto messages will be transferred to the provided Handler.
-// As subscribing in Ditto is transport-specific - this is a lighweight version of a default subsciption that is applicable in the MQTT use case.
-func (client *Client) Subscribe(handler Handler) {
+// Subscribe ensures that all incoming Ditto messages will be transferred to the provided Handlers.
+// As subscribing in Ditto is transport-specific - this is a lighweight version of a default subscription that is applicable in the MQTT use case.
+func (client *Client) Subscribe(handlers ...Handler) {
 	client.handlersLock.Lock()
 	defer client.handlersLock.Unlock()
-	client.handler = handler
+
+	if client.handlers == nil {
+		client.handlers = make(map[string]Handler)
+	}
+
+	for _, handler := range handlers {
+		client.handlers[getHandlerName(handler)] = handler
+	}
 }
 
-// Unsubscribe ensures that protocol.Envelope-s will no longer be forwarded to the provided Handler.
-func (client *Client) Unsubscribe() {
+// Unsubscribe cancels sending incoming Ditto messages from the client to the provided Handlers
+// and removes them from the subscriptions list of the client.
+// If Unsubscribe is called without arguments, it will cancel and remove all currently subscribed Handlers.
+func (client *Client) Unsubscribe(handlers ...Handler) {
 	client.handlersLock.Lock()
 	defer client.handlersLock.Unlock()
-	client.handler = nil
+
+	if len(handlers) == 0 {
+		client.handlers = make(map[string]Handler)
+	} else {
+		for _, handler := range handlers {
+			delete(client.handlers, getHandlerName(handler))
+		}
+	}
 }
