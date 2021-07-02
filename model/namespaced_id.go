@@ -13,9 +13,13 @@ package model
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 )
+
+var regexNamespacedID = regexp.MustCompile("^([^:]+):([^:]+)$")
 
 // NamespacedID represents the namespaced entity ID defined by the Ditto specification.
 // It is a unique identifier representing a Thing compliant with the Ditto requirements:
@@ -32,9 +36,13 @@ func NewNamespacedID(namespace string, name string) *NamespacedID {
 }
 
 // NewNamespacedIDFrom creates a new NamespacedID instance using the provided string in the valid form of 'namespace:name'.
+// Returns nil if the provided string doesn't match the form.
 func NewNamespacedIDFrom(full string) *NamespacedID {
-	elements := strings.Split(full, ":")
-	return &NamespacedID{Namespace: elements[0], Name: strings.Join(elements[1:], ":")}
+	if !regexNamespacedID.MatchString(full) {
+		return nil
+	}
+	elements := strings.SplitN(full, ":", 2)
+	return &NamespacedID{Namespace: elements[0], Name: elements[1]}
 }
 
 // String provides the string representation of the NamespacedID entity in the form of 'namespace:name'.
@@ -51,9 +59,12 @@ func (nsID *NamespacedID) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &nsIDString); err != nil {
 		return err
 	}
-	elements := strings.Split(nsIDString, ":")
+	if !regexNamespacedID.MatchString(nsIDString) {
+		return errors.New("Invalid NamespacedID: " + nsIDString)
+	}
+	elements := strings.SplitN(nsIDString, ":", 2)
 	nsID.Namespace = elements[0]
-	nsID.Name = strings.Join(elements[1:], ":")
+	nsID.Name = elements[1]
 	return nil
 }
 
