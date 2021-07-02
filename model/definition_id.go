@@ -13,7 +13,9 @@ package model
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -30,9 +32,15 @@ type DefinitionID struct {
 
 const definitionIdTemplate = "%s:%s:%s"
 
+var regexDefinitionID = regexp.MustCompile("^([^:]+):([^:]+):([^:]+)$")
+
 // NewDefinitionIDFrom creates a new DefinitionID instance from a provided string in the form of 'namespace:name:version'.
+// Returns nil if the provided string doesn't match the form.
 func NewDefinitionIDFrom(full string) *DefinitionID {
-	elements := strings.Split(full, ":")
+	if !regexDefinitionID.MatchString(full) {
+		return nil
+	}
+	elements := strings.SplitN(full, ":", 3)
 	return &DefinitionID{Namespace: elements[0], Name: elements[1], Version: elements[2]}
 }
 
@@ -56,7 +64,11 @@ func (definitionId *DefinitionID) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &defIDString); err != nil {
 		return err
 	}
-	elements := strings.Split(defIDString, ":")
+
+	if !regexDefinitionID.MatchString(defIDString) {
+		return errors.New("Invalid DefinitionID: " + defIDString)
+	}
+	elements := strings.SplitN(defIDString, ":", 3)
 	definitionId.Namespace = elements[0]
 	definitionId.Name = elements[1]
 	definitionId.Version = elements[2]
