@@ -22,10 +22,13 @@ func (client *Client) defaultMessageHandler(mqttClient MQTT.Client, message MQTT
 
 func (client *Client) honoMessageHandler(mqttClient MQTT.Client, message MQTT.Message) {
 	DEBUG.Printf("received message for client subscription: %v", message)
+	// wait for handlers added in the ConnectHandler
+	client.wgConnectHandler.Wait()
+
 	client.handlersLock.RLock()
 	defer client.handlersLock.RUnlock()
 
-	if client.handlers == nil || len(client.handlers) == 0 {
+	if len(client.handlers) == 0 {
 		WARN.Printf("message received, but no handlers were found")
 		return
 	}
