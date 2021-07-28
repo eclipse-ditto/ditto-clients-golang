@@ -33,6 +33,7 @@ type Client struct {
 	handlers           map[string]Handler
 	handlersLock       sync.RWMutex
 	externalMqttClient bool
+	wgConnectHandler   sync.WaitGroup
 }
 
 // NewClient creates a new Client instance with the provided Configuration.
@@ -83,7 +84,9 @@ func NewClientMqtt(mqttClient MQTT.Client, cfg *Configuration) (*Client, error) 
 // In the case of an external MQTT client, if any error occurs during the internal preparations - it's returned here.
 func (client *Client) Connect() error {
 	if client.externalMqttClient {
+		client.wgConnectHandler.Add(1)
 		if token := client.pahoClient.Subscribe(honoMQTTTopicSubscribeCommands, 1, client.honoMessageHandler); token.Wait() && token.Error() != nil {
+			client.wgConnectHandler.Done()
 			return token.Error()
 		}
 		go client.notifyClientConnected()

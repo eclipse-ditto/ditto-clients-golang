@@ -48,8 +48,7 @@ client = ditto.NewClient(config)
 After you have configured and created your client instance, it's ready to be connected.
 ```go
 if err := client.Connect(); err != nil {
-    fmt.Errorf("%v", err)
-    panic("cannot connect to broker")
+    panic(fmt.Errorf("cannot connect to broker: %v", err))
 }
 defer disconnect(client)
 ```
@@ -83,7 +82,7 @@ Send the Ditto command.
 ```go
 envelope := command.Envelope(protocol.WithResponseRequired(false))
 if err := client.Send(envelope); err != nil {
-    fmt.Errorf("could not send Ditto message: %v", err)
+    fmt.Printf("could not send Ditto message: %v\n", err)
 }
 ```
 
@@ -133,8 +132,37 @@ func messagesHandler(requestID string, msg *protocol.Envelope) {
         responseMsg := response.Envelope(protocol.WithCorrelationID(msg.Headers.CorrelationID()), protocol.WithResponseRequired(false))
         responseMsg.Status = 200
         if replyErr := client.Reply(requestID, responseMsg); replyErr != nil {
-            fmt.Errorf("failed to send response to request Id %s: %v", requestID, replyErr)
+            fmt.Printf("failed to send response to request Id %s: %v\n", requestID, replyErr)
         }
     }
+}
+```
+
+## Logging
+
+A custom logger could be implemented based on ditto.Logger interface. For example:
+
+```go
+type logger struct {
+	prefix string
+}
+
+func (l logger) Println(v ...interface{}) {
+    fmt.Println(l.prefix, fmt.Sprint(v...))
+}
+
+func (l logger) Printf(format string, v ...interface{}) {
+    fmt.Printf(fmt.Sprint(l.prefix, " ", format), v...)
+}
+```
+
+Then the Ditto library could be configured to use the logger by assigning the logging endpoints - ERROR, WARN, INFO and DEBUG.
+
+```go
+func init() {
+    ditto.ERROR = logger{prefix: "ERROR  "}
+    ditto.WARN  = logger{prefix: "WARN   "}
+    ditto.INFO  = logger{prefix: "INFO   "}
+    ditto.DEBUG = logger{prefix: "DEBUG  "}
 }
 ```

@@ -29,6 +29,7 @@ const (
 )
 
 func (client *Client) clientConnectHandler(pahoClient MQTT.Client) {
+	client.wgConnectHandler.Add(1)
 	if token := client.pahoClient.Subscribe(honoMQTTTopicSubscribeCommands, 1, client.honoMessageHandler); token.Wait() && token.Error() != nil {
 		ERROR.Printf("error subscribing to root Hono topic %s : %v", honoMQTTTopicSubscribeCommands, token.Error())
 	}
@@ -36,6 +37,7 @@ func (client *Client) clientConnectHandler(pahoClient MQTT.Client) {
 }
 
 func (client *Client) notifyClientConnected() {
+	defer client.wgConnectHandler.Done()
 	if client.cfg == nil {
 		return
 	}
