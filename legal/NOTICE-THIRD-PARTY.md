@@ -3,7 +3,7 @@
 ## github.com/eclipse/paho.mqtt.golang (1.2.0)
 
  * Go module: `github.com/eclipse/paho.mqtt.golang v1.2.0`
- * License: [EPL 1.0](licenses/LICENSE.eclipse_paho_mqtt_clients_golang-1.2.0)
+ * License: [EDL 1.0](licenses/LICENSE.eclipse_paho_mqtt_clients_golang-1.2.0)
  * Project: https://www.eclipse.org/paho/clients/golang/
  * Source: https://github.com/eclipse/paho.mqtt.golang/releases/tag/v1.2.0
 
