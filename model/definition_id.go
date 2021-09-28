@@ -16,7 +16,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strings"
 )
 
 // DefinitionID represents an ID of a given definition entity.
@@ -30,28 +29,34 @@ type DefinitionID struct {
 	Version   string
 }
 
-const definitionIdTemplate = "%s:%s:%s"
+const (
+	definitionIDTemplate     = "%s:%s:%s"
+	definitionElementPattern = "([_a-zA-Z0-9\\-.]+)"
+)
 
-var regexDefinitionID = regexp.MustCompile("^([^:]+):([^:]+):([^:]+)$")
+var regexDefinitionID = regexp.MustCompile("^" + fmt.Sprintf(definitionIDTemplate, definitionElementPattern, definitionElementPattern, definitionElementPattern) + "$")
 
 // NewDefinitionIDFrom creates a new DefinitionID instance from a provided string in the form of 'namespace:name:version'.
 // Returns nil if the provided string doesn't match the form.
 func NewDefinitionIDFrom(full string) *DefinitionID {
-	if !regexDefinitionID.MatchString(full) {
-		return nil
+	if matches, err := validateDefinitionID(full); err == nil {
+		return &DefinitionID{Namespace: matches[1], Name: matches[2], Version: matches[3]}
 	}
-	elements := strings.SplitN(full, ":", 3)
-	return &DefinitionID{Namespace: elements[0], Name: elements[1], Version: elements[2]}
+	return nil
 }
 
 // NewDefinitionID creates a new DefinitionID instance with the namespace, name and version provided.
+// Returns nil if the provided string doesn't match the form.
 func NewDefinitionID(namespace string, name string, version string) *DefinitionID {
-	return &DefinitionID{Namespace: namespace, Name: name, Version: version}
+	if _, err := validateDefinitionID(fmt.Sprintf(definitionIDTemplate, namespace, name, version)); err == nil {
+		return &DefinitionID{Namespace: namespace, Name: name, Version: version}
+	}
+	return nil
 }
 
 // String provides the string representation of a DefinitionID in the Ditto's specified form of 'namespace:name:version'.
 func (definitionId *DefinitionID) String() string {
-	return fmt.Sprintf(definitionIdTemplate, definitionId.Namespace, definitionId.Name, definitionId.Version)
+	return fmt.Sprintf(definitionIDTemplate, definitionId.Namespace, definitionId.Name, definitionId.Version)
 }
 
 func (definitionId *DefinitionID) MarshalJSON() ([]byte, error) {
@@ -65,13 +70,14 @@ func (definitionId *DefinitionID) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if !regexDefinitionID.MatchString(defIDString) {
-		return errors.New("Invalid DefinitionID: " + defIDString)
+	matches, err := validateDefinitionID(defIDString)
+	if err != nil {
+		return err
 	}
-	elements := strings.SplitN(defIDString, ":", 3)
-	definitionId.Namespace = elements[0]
-	definitionId.Name = elements[1]
-	definitionId.Version = elements[2]
+
+	definitionId.Namespace = matches[1]
+	definitionId.Name = matches[2]
+	definitionId.Version = matches[3]
 	return nil
 }
 
@@ -91,4 +97,11 @@ func (definitionId *DefinitionID) WithName(name string) *DefinitionID {
 func (definitionId *DefinitionID) WithVersion(version string) *DefinitionID {
 	definitionId.Version = version
 	return definitionId
+}
+
+func validateDefinitionID(defIDString string) ([]string, error) {
+	if matches := regexDefinitionID.FindStringSubmatch(defIDString); len(matches) == 4 {
+		return matches, nil
+	}
+	return nil, errors.New("invalid DefinitionID: " + defIDString)
 }
