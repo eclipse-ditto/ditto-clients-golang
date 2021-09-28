@@ -114,7 +114,7 @@ func (topic *Topic) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	if !regexFiveElementTopic.MatchString(v) && !regexSixElementTopic.MatchString(v) {
-		return errors.New("Invalid topic: " + v)
+		return errors.New("invalid topic: " + v)
 	}
 	elements := strings.Split(v, "/")
 	index := 0
