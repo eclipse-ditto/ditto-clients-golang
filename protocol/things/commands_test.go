@@ -82,6 +82,23 @@ func TestModify(t *testing.T) {
 	}
 }
 
+func TestMerge(t *testing.T) {
+	testCommand := &Command{
+		Topic: &protocol.Topic{},
+	}
+
+	want := &Command{
+		Topic: &protocol.Topic{
+			Action: protocol.ActionMerge,
+		},
+		Payload: &model.Feature{},
+	}
+
+	if got := testCommand.Merge(&model.Feature{}); !reflect.DeepEqual(got, want) {
+		t.Errorf("Command.Merge() = %v want: %v", got, want)
+	}
+}
+
 func TestRetrieve(t *testing.T) {
 	payload := struct {
 		ThingIDs []string `json:"thingIds"`
@@ -94,8 +111,19 @@ func TestRetrieve(t *testing.T) {
 		testCommand *Command
 		want        *Command
 	}{
-		"test_command_without_arguments": {
+		"test_command_empty_arguments": {
 			arg: []model.NamespacedID{},
+			testCommand: &Command{
+				Topic: &protocol.Topic{},
+			},
+			want: &Command{
+				Topic: &protocol.Topic{
+					Action: protocol.ActionRetrieve,
+				},
+			},
+		},
+		"test_command_without_arguments": {
+			arg: nil,
 			testCommand: &Command{
 				Topic: &protocol.Topic{},
 			},

@@ -13,6 +13,7 @@ package things
 
 import (
 	"fmt"
+
 	"github.com/eclipse/ditto-clients-golang/model"
 	"github.com/eclipse/ditto-clients-golang/protocol"
 )
@@ -61,6 +62,13 @@ func (event *Event) Modified(payload interface{}) *Event {
 	return event
 }
 
+// Merged configures the Event to notify for a modification with a merge patch defined by the provided payload.
+func (event *Event) Merged(payload interface{}) *Event {
+	event.Topic.WithAction(protocol.ActionMerged)
+	event.Payload = payload
+	return event
+}
+
 // Deleted configures the Event to notify for a deletion of a Thing or parts of the content it holds.
 func (event *Event) Deleted() *Event {
 	event.Topic.WithAction(protocol.ActionDeleted)
@@ -85,8 +93,8 @@ func (event *Event) Attributes() *Event {
 	return event
 }
 
-// Attribute configures the Event to notify for a change in the Thing's attribute defined by the provided attributePath
-// as JSON pointer path (https://tools.ietf.org/html/rfc6901).
+// Attribute configures the Event to notify for a change in the Thing's attribute
+// defined by the provided attributePath as JSON pointer path (https://tools.ietf.org/html/rfc6901).
 func (event *Event) Attribute(attributePath string) *Event {
 	event.Path = fmt.Sprintf(pathThingAttributeFormat, attributePath)
 	return event
@@ -104,20 +112,22 @@ func (event *Event) Feature(featureID string) *Event {
 	return event
 }
 
-// FeatureDefinition configures the Event to notify for a change in the Thing's feature's definition for the feature defined by the provided featureID.
+// FeatureDefinition configures the Event to notify for a change in the Thing's feature's definition for the feature
+// defined by the provided featureID.
 func (event *Event) FeatureDefinition(featureID string) *Event {
 	event.Path = fmt.Sprintf(pathThingFeatureDefinitionFormat, featureID)
 	return event
 }
 
-// FeatureProperties configures the Event to notify for a change in the Thing's feature's properties of the feature defined by the provided featureID.
+// FeatureProperties configures the Event to notify for a change in the Thing's feature's properties of the feature
+// defined by the provided featureID.
 func (event *Event) FeatureProperties(featureID string) *Event {
 	event.Path = fmt.Sprintf(pathThingFeaturePropertiesFormat, featureID)
 	return event
 }
 
-// FeatureProperty configures the Event to notify for a change in the Thing's feature's property defined by the provided
-// propertyPath as JSON pointer path (https://tools.ietf.org/html/rfc6901).
+// FeatureProperty configures the Event to notify for a change in the Thing's feature's property
+// defined by the provided featureID and propertyPath as JSON pointer path (https://tools.ietf.org/html/rfc6901).
 func (event *Event) FeatureProperty(featureID, propertyPath string) *Event {
 	event.Path = fmt.Sprintf(pathThingFeaturePropertyFormat, featureID, propertyPath)
 	return event

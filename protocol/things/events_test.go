@@ -70,6 +70,23 @@ func TestModified(t *testing.T) {
 	}
 }
 
+func TestMerged(t *testing.T) {
+	testEvent := &Event{
+		Topic: &protocol.Topic{},
+	}
+
+	want := &Event{
+		Topic: &protocol.Topic{
+			Action: protocol.ActionMerged,
+		},
+		Payload: &model.Feature{},
+	}
+
+	if got := testEvent.Merged(&model.Feature{}); !reflect.DeepEqual(got, want) {
+		t.Errorf("Event.Merged() = %v want: %v", got, want)
+	}
+}
+
 func TestDeleted(t *testing.T) {
 	testEvent := &Event{
 		Topic: &protocol.Topic{},

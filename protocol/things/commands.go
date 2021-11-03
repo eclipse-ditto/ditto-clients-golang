@@ -13,6 +13,7 @@ package things
 
 import (
 	"fmt"
+
 	"github.com/eclipse/ditto-clients-golang/model"
 	"github.com/eclipse/ditto-clients-golang/protocol"
 )
@@ -78,6 +79,17 @@ func (cmd *Command) Modify(payload interface{}) *Command {
 	return cmd
 }
 
+// Merge sets the action of the command instance accordingly.
+// For all merge commands the provided partial payload data is expected to match
+// the defined JSON merge patch format (https://tools.ietf.org/html/rfc7396).
+// In case of conflicts with the existing thing, the value provided in the patch overwrites the existing value.
+// Any provided nil values will be used to remove the referenced thing data.
+func (cmd *Command) Merge(payload interface{}) *Command {
+	cmd.Topic.WithAction(protocol.ActionMerge)
+	cmd.Payload = payload
+	return cmd
+}
+
 // Retrieve sets the action of the command instance accordingly.
 // If thingIDs are provided the response will contain the information for these Things only.
 // Further Headers can be added via the Message method to adjust the response even more.
@@ -85,7 +97,7 @@ func (cmd *Command) Modify(payload interface{}) *Command {
 // '_:_', '_:thing.id' are valid Thing NamespacedIDs to perform the multiple Things retrieve call.
 func (cmd *Command) Retrieve(thingIDs ...model.NamespacedID) *Command {
 	cmd.Topic.WithAction(protocol.ActionRetrieve)
-	if thingIDs != nil && len(thingIDs) > 0 {
+	if len(thingIDs) > 0 {
 		var thingIDsStruct interface{}
 		thingIDsArray := make([]string, len(thingIDs))
 		for i, id := range thingIDs {
@@ -125,8 +137,8 @@ func (cmd *Command) Attributes() *Command {
 	return cmd
 }
 
-// Attribute configures the command to affect a specified Thing's attribute
-// defined by the provided attributePath as JSON pointer path (https://tools.ietf.org/html/rfc6901).
+// Attribute configures the command to affect a specified attribute of the Thing,
+// defined by the attributePath as JSON pointer path (https://tools.ietf.org/html/rfc6901).
 func (cmd *Command) Attribute(attributePath string) *Command {
 	cmd.Path = fmt.Sprintf(pathThingAttributeFormat, attributePath)
 	return cmd
@@ -156,8 +168,8 @@ func (cmd *Command) FeatureProperties(featureID string) *Command {
 	return cmd
 }
 
-// FeatureProperty configures the command to affect a specified Thing's property property via the provided
-// propertyPath as JSON pointer path (https://tools.ietf.org/html/rfc6901).
+// FeatureProperty configures the command to affect a specified property via the provided featureID feature
+// of the Thing and the propertyPath as JSON pointer path (https://tools.ietf.org/html/rfc6901).
 func (cmd *Command) FeatureProperty(featureID, propertyPath string) *Command {
 	cmd.Path = fmt.Sprintf(pathThingFeaturePropertyFormat, featureID, propertyPath)
 	return cmd

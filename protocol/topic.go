@@ -46,6 +46,8 @@ const (
 	ActionCreated   TopicAction = "created"
 	ActionModify    TopicAction = "modify"
 	ActionModified  TopicAction = "modified"
+	ActionMerge     TopicAction = "merge"
+	ActionMerged    TopicAction = "merged"
 	ActionDelete    TopicAction = "delete"
 	ActionDeleted   TopicAction = "deleted"
 	ActionRetrieve  TopicAction = "retrieve"
