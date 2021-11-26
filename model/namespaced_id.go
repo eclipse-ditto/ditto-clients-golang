@@ -21,7 +21,7 @@ import (
 
 const namespacedIDTemplate = "%s:%s"
 
-var regexNamespacedID = regexp.MustCompile("^(|(?:[a-zA-Z]\\w*)(?:\\.[a-zA-Z]\\w*)*):([^\\x00-\\x1F\\x7F-\\xFF/]+)$")
+var regexNamespacedID = regexp.MustCompile("^(|(?:[a-zA-Z]\\w*)(?:[.\\-][a-zA-Z]\\w*)*):([^\\x00-\\x1F\\x7F-\\xFF/]+)$")
 
 // NamespacedID represents the namespaced entity ID defined by the Ditto specification.
 // It is a unique identifier representing a Thing compliant with the Ditto requirements:
