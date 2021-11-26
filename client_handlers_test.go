@@ -13,15 +13,23 @@ package ditto
 
 import (
 	"fmt"
-	"reflect"
 	"sync"
 	"testing"
-	"time"
 
+	"github.com/eclipse/ditto-clients-golang/internal"
+	"github.com/eclipse/ditto-clients-golang/internal/mock"
 	"github.com/eclipse/ditto-clients-golang/protocol"
+	"github.com/golang/mock/gomock"
 )
 
-func TestMessageHandlingSuccess(t *testing.T) {
+func testHandler(requestID string, message *protocol.Envelope) {}
+
+func TestHonoMessageHandlingSuccess(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
@@ -30,52 +38,59 @@ func TestMessageHandlingSuccess(t *testing.T) {
 	requestId := "expected"
 	topic := createTopic(requestId)
 
-	mqttMessage := newMockMQTTMessage(validMessage, topic)
-
 	expectedEnvelope, _ := getEnvelope(validMessage)
 
 	handler := func(requestID string, message *protocol.Envelope) {
-		assertEqual(t, expectedEnvelope, message)
+		internal.AssertEqual(t, expectedEnvelope, message)
 		wg.Done()
 	}
 
+	mockMqttMessage.EXPECT().Payload().Return(validMessage)
+	mockMqttMessage.EXPECT().Topic().Return(topic)
+
 	unitUnderTest.Subscribe(handler)
-	unitUnderTest.honoMessageHandler(nil, mqttMessage)
+	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
 
-	assertEqual(t, mqttMessage.payloadCalls, 1)
-
-	assertPassed(t, &wg, 5)
+	internal.AssertWithTimeout(t, &wg, 5)
 }
 
-func TestInvalidMessageHandling(t *testing.T) {
+func TestHonoInvalidMesssageHandling(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+
 	unitUnderTest := NewClient(&Configuration{})
 	invalidJson := []byte("{\"t\"}")
-	requestId := "expected"
-	topic := createTopic(requestId)
-
-	mqttMessage := newMockMQTTMessage(invalidJson, topic)
 
 	handler := func(requestID string, message *protocol.Envelope) {
 		t.Errorf("handler should not be called")
 		t.Fail()
 	}
 
-	unitUnderTest.Subscribe(handler)
-	unitUnderTest.honoMessageHandler(nil, mqttMessage)
+	mockMqttMessage.EXPECT().Payload().Return(invalidJson)
 
-	assertEqual(t, mqttMessage.payloadCalls, 1)
+	unitUnderTest.Subscribe(handler)
+	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
 }
 
-func TestWithoutHandlersDoesNotPanic(t *testing.T) {
-	mqttMessage := newMockMQTTMessage(nil, "")
+func TestHonoWithoutHandlersDoesNotPanic(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+
 	unitUnderTest := NewClient(&Configuration{})
 
-	unitUnderTest.honoMessageHandler(nil, mqttMessage)
-
-	assertEqual(t, mqttMessage.payloadCalls, 0)
+	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
 }
 
-func TestMultipleHandlers(t *testing.T) {
+func TestHonoMultipleHanlders(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
@@ -83,31 +98,36 @@ func TestMultipleHandlers(t *testing.T) {
 	validMessage := []byte("{\"test\": 15}")
 	requestId := "expected"
 	topic := createTopic(requestId)
-	mqttMessage := newMockMQTTMessage(validMessage, topic)
 
 	expectedEnvelope, _ := getEnvelope(validMessage)
 
 	handlerOne := func(requestID string, message *protocol.Envelope) {
-		assertEqual(t, expectedEnvelope, message)
+		internal.AssertEqual(t, expectedEnvelope, message)
 		wg.Done()
 	}
 
 	handlerTwo := func(requestID string, message *protocol.Envelope) {
-		assertEqual(t, expectedEnvelope, message)
+		internal.AssertEqual(t, expectedEnvelope, message)
 		wg.Done()
 	}
+
+	mockMqttMessage.EXPECT().Payload().Return(validMessage)
+	mockMqttMessage.EXPECT().Topic().Return(topic)
 
 	unitUnderTest.Subscribe(handlerOne)
 	unitUnderTest.Subscribe(handlerTwo)
 
-	unitUnderTest.honoMessageHandler(nil, mqttMessage)
+	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
 
-	assertPassed(t, &wg, 5)
-	assertEqual(t, mqttMessage.payloadCalls, 1)
-	assertEqual(t, mqttMessage.topicCalls, 1)
+	internal.AssertWithTimeout(t, &wg, 5)
 }
 
-func TestAddMultipleHandlers(t *testing.T) {
+func TestHonoAddMultipleHanlders(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
@@ -116,31 +136,35 @@ func TestAddMultipleHandlers(t *testing.T) {
 	validMessage := []byte("{\"test\": 15}")
 	requestId := "expected"
 	topic := createTopic(requestId)
-	mqttMessage := newMockMQTTMessage(validMessage, topic)
 
 	expectedEnvelope, _ := getEnvelope(validMessage)
 
 	handlerOne := func(requestID string, message *protocol.Envelope) {
-		assertEqual(t, expectedEnvelope, message)
+		internal.AssertEqual(t, expectedEnvelope, message)
 		wg.Done()
 	}
 
 	handlerTwo := func(requestID string, message *protocol.Envelope) {
-		assertEqual(t, expectedEnvelope, message)
+		internal.AssertEqual(t, expectedEnvelope, message)
 		wg.Done()
 	}
 
+	mockMqttMessage.EXPECT().Payload().Return(validMessage)
+	mockMqttMessage.EXPECT().Topic().Return(topic)
+
 	unitUnderTest.Subscribe(handlerOne, handlerTwo)
 
-	unitUnderTest.honoMessageHandler(nil, mqttMessage)
+	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
 
-	assertPassed(t, &wg, 5)
-	assertEqual(t, mqttMessage.payloadCalls, 1)
-	assertEqual(t, mqttMessage.topicCalls, 1)
+	internal.AssertWithTimeout(t, &wg, 5)
 }
 
-func TestRemoveAllHandlers(t *testing.T) {
-	mqttMessage := newMockMQTTMessage(nil, "")
+func TestRemoveAllHanlders(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+
 	unitUnderTest := NewClient(&Configuration{})
 
 	handlerOne := func(requestID string, message *protocol.Envelope) {
@@ -152,19 +176,25 @@ func TestRemoveAllHandlers(t *testing.T) {
 		t.Errorf("should not be called")
 		t.Fail()
 	}
+
+	mockMqttMessage.EXPECT().Payload().Times(0)
+	mockMqttMessage.EXPECT().Topic().Times(0)
 
 	// We already know this works from another test
 	unitUnderTest.Subscribe(handlerOne, handlerTwo)
 
 	unitUnderTest.Unsubscribe()
 
-	unitUnderTest.honoMessageHandler(nil, mqttMessage)
-	assertEqual(t, mqttMessage.payloadCalls, 0)
-	assertEqual(t, mqttMessage.topicCalls, 0)
+	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
 
 }
 
-func TestRemoveSingleHandler(t *testing.T) {
+func TestRemoveSingleHanlder(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
@@ -174,10 +204,9 @@ func TestRemoveSingleHandler(t *testing.T) {
 	requestId := "expected"
 	topic := createTopic(requestId)
 	expectedEnvelope, _ := getEnvelope(validMessage)
-	mqttMessage := newMockMQTTMessage(validMessage, topic)
 
 	handlerOne := func(requestID string, message *protocol.Envelope) {
-		assertEqual(t, expectedEnvelope, message)
+		internal.AssertEqual(t, expectedEnvelope, message)
 		wg.Done()
 	}
 
@@ -186,106 +215,25 @@ func TestRemoveSingleHandler(t *testing.T) {
 		t.Fail()
 	}
 
+	mockMqttMessage.EXPECT().Payload().Return(validMessage)
+	mockMqttMessage.EXPECT().Topic().Return(topic)
+
 	unitUnderTest.Subscribe(handlerOne, handlerTwo)
 
 	unitUnderTest.Unsubscribe(handlerTwo)
 
-	unitUnderTest.honoMessageHandler(nil, mqttMessage)
-
-	assertPassed(t, &wg, 5)
-	assertEqual(t, mqttMessage.payloadCalls, 1)
-	assertEqual(t, mqttMessage.topicCalls, 1)
-
+	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
+	internal.AssertWithTimeout(t, &wg, 5)
 }
-
-func testHandler(requestID string, message *protocol.Envelope) {}
 
 func TestGetHandlerName(t *testing.T) {
 	expectedName := "github.com/eclipse/ditto-clients-golang.testHandler"
 
 	actualName := getHandlerName(testHandler)
 
-	assertEqual(t, expectedName, actualName)
+	internal.AssertEqual(t, expectedName, actualName)
 }
 
 func createTopic(requestId string) string {
 	return fmt.Sprintf("command///req/%s/dosomething", requestId)
 }
-
-func assertEqual(t *testing.T, expected interface{}, actual interface{}) {
-	if !reflect.DeepEqual(expected, actual) {
-		t.Errorf("expected %v , got %v", expected, actual)
-		t.Fail()
-	}
-}
-
-func assertPassed(t *testing.T, wg *sync.WaitGroup, timeout time.Duration) {
-	c := make(chan struct{})
-	go func() {
-		defer close(c)
-		wg.Wait()
-	}()
-	select {
-	case <-c:
-		return // completed normally
-	case <-time.After(timeout * time.Second):
-		t.Fatal("timed out")
-	}
-}
-
-// mockMQTTMessage is a mock of MQTTMessage interface
-type mockMQTTMessage struct {
-	payload      []byte
-	payloadCalls int
-	payloadMutex sync.Mutex
-	topic        string
-	topicCalls   int
-	topicMutex   sync.Mutex
-}
-
-func newMockMQTTMessage(payload []byte, topic string) *mockMQTTMessage {
-	return &mockMQTTMessage{
-		payload:      payload,
-		payloadCalls: 0,
-		payloadMutex: sync.Mutex{},
-
-		topic:      topic,
-		topicCalls: 0,
-		topicMutex: sync.Mutex{},
-	}
-}
-
-// Duplicate mocks base method
-func (m *mockMQTTMessage) Duplicate() bool { return false }
-
-// Qos mocks base method
-func (m *mockMQTTMessage) Qos() byte { return byte(0) }
-
-// Retained mocks base method
-func (m *mockMQTTMessage) Retained() bool { return false }
-
-// Topic mocks base method
-func (m *mockMQTTMessage) Topic() string {
-	m.topicMutex.Lock()
-	defer m.topicMutex.Unlock()
-
-	m.topicCalls++
-
-	return m.topic
-}
-
-// MessageID mocks base method
-func (m *mockMQTTMessage) MessageID() uint16 { return uint16(1) }
-
-// Payload mocks base method
-func (m *mockMQTTMessage) Payload() []byte {
-	m.payloadMutex.Lock()
-	defer m.payloadMutex.Unlock()
-
-	m.payloadCalls++
-
-	return m.payload
-}
-
-// Ack mocks base method
-func (m *mockMQTTMessage) Ack() {}

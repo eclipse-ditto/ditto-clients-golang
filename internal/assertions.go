@@ -53,7 +53,7 @@ func AssertWithTimeout(t *testing.T, waitGroup *sync.WaitGroup, testTimeout time
 	select {
 	case <-testWaitChan:
 		return // completed normally
-	case <-time.After(testTimeout):
+	case <-time.After(testTimeout * time.Second):
 		t.Fatal("timed out waiting for ", testTimeout)
 	}
 }
