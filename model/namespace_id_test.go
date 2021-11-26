@@ -12,9 +12,12 @@
 package model
 
 import (
+	"errors"
 	"math/rand"
 	"reflect"
 	"testing"
+
+	"github.com/eclipse/ditto-clients-golang/internal"
 )
 
 func TestNamespaceIDNewNamespacedID(t *testing.T) {
@@ -37,13 +40,33 @@ func TestNamespaceIDNewNamespacedID(t *testing.T) {
 			args: []string{"test:namespace", "testId"},
 			want: nil,
 		},
+		"test_new_namespaced_id_namespace_with_dash": {
+			args: []string{"test-namespace", "testId"},
+			want: &NamespacedID{
+				Namespace: "test-namespace",
+				Name:      "testId",
+			},
+		},
+		"test_new_namespaced_id_namespace_with_multiple_dash": {
+			args: []string{"test-namespace-id", "testId"},
+			want: &NamespacedID{
+				Namespace: "test-namespace-id",
+				Name:      "testId",
+			},
+		},
+		"test_new_namespaced_id_namespace_with_dash_dot": {
+			args: []string{"test.namespace-id", "testId"},
+			want: &NamespacedID{
+				Namespace: "test.namespace-id",
+				Name:      "testId",
+			},
+		},
 	}
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			if got := NewNamespacedID(testCase.args[0], testCase.args[1]); !reflect.DeepEqual(got, testCase.want) {
-				t.Errorf("NewNamespacedID() = %v, want %v", got, testCase.want)
-			}
+			got := NewNamespacedID(testCase.args[0], testCase.args[1])
+			internal.AssertEqual(t, got, testCase.want)
 		})
 	}
 }
@@ -54,28 +77,28 @@ func TestNamespaceIDNewNamespacedIDFrom(t *testing.T) {
 		want *NamespacedID
 	}{
 		"test_new_namespaced_id_from_valid": {
-			arg:  "test.namespace_42:testId",
+			arg: "test.namespace_42:testId",
 			want: &NamespacedID{
 				Namespace: "test.namespace_42",
 				Name:      "testId",
 			},
 		},
 		"test_new_namespaced_id_from_with_namespace_with_pascal_case": {
-			arg:  "Test.Namespace_42:testId",
+			arg: "Test.Namespace_42:testId",
 			want: &NamespacedID{
 				Namespace: "Test.Namespace_42",
 				Name:      "testId",
 			},
 		},
 		"test_new_namespaced_id_from_without_namespace": {
-			arg:  ":testId",
+			arg: ":testId",
 			want: &NamespacedID{
 				Namespace: "",
 				Name:      "testId",
 			},
 		},
 		"test_new_namespaced_id_from_with_double_colon": {
-			arg:  "test.namespace:testId:testId",
+			arg: "test.namespace:testId:testId",
 			want: &NamespacedID{
 				Namespace: "test.namespace",
 				Name:      "testId:testId",
@@ -109,13 +132,33 @@ func TestNamespaceIDNewNamespacedIDFrom(t *testing.T) {
 			}(),
 			want: nil,
 		},
+		"test_new_namsepaced_id_from_with_namespace_with_single_dash": {
+			arg: "test-namespace:testId",
+			want: &NamespacedID{
+				Namespace: "test-namespace",
+				Name:      "testId",
+			},
+		},
+		"test_new_namsepaced_id_from_with_namespace_with_multiple_dash": {
+			arg: "test-namespace-id:testId",
+			want: &NamespacedID{
+				Namespace: "test-namespace-id",
+				Name:      "testId",
+			},
+		},
+		"test_new_namsepaced_id_from_with_namespace_with_dash_dot": {
+			arg: "test.namespace-id:testId",
+			want: &NamespacedID{
+				Namespace: "test.namespace-id",
+				Name:      "testId",
+			},
+		},
 	}
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			if got := NewNamespacedIDFrom(testCase.arg); !reflect.DeepEqual(got, testCase.want) {
-				t.Errorf("NewNamespacedIDFrom() = %v, want %v", got, testCase.want)
-			}
+			got := NewNamespacedIDFrom(testCase.arg)
+			internal.AssertEqual(t, got, testCase.want)
 		})
 	}
 }
@@ -128,11 +171,10 @@ func TestNamespaceIDString(t *testing.T) {
 
 	want := "test.namespace:testId"
 
-	if got := testNamespaceID.String(); got != want {
-		t.Errorf("NamespaceID.String() = %v, want %v", got, want)
-	}
+	got := testNamespaceID.String()
+	internal.AssertEqual(t, got, want)
 
-	if got := testNamespaceID.String(); reflect.TypeOf(got) != reflect.TypeOf(want) {
+	if reflect.TypeOf(got) != reflect.TypeOf(want) {
 		t.Errorf("NamespaceID.String() = %v, want %v", reflect.TypeOf(got), reflect.TypeOf(want))
 	}
 }
@@ -145,36 +187,51 @@ func TestNamespaceIDMarshalJSON(t *testing.T) {
 
 	want := []byte("\"test.namespace:testId\"")
 
-	if got, _ := testNamespace.MarshalJSON(); !reflect.DeepEqual(got, want) {
-		t.Errorf("NamespacedID.MarshaJSON() = %v, want %v", got, want)
-	}
+	got, _ := testNamespace.MarshalJSON()
+	internal.AssertEqual(t, got, want)
 }
 
 func TestNamespaceIDUnmarshalJSON(t *testing.T) {
 	tests := map[string]struct {
 		arg     []byte
 		want    *NamespacedID
-		wantErr bool
+		wantErr error
 	}{
 		"test_namespaced_id_unmarshal_json_valid": {
-			arg:  []byte("\"test.namespace:testId\""),
+			arg: []byte("\"test.namespace:testId\""),
 			want: &NamespacedID{
 				Namespace: "test.namespace",
 				Name:      "testId",
 			},
-			wantErr: false,
+			wantErr: nil,
+		},
+		"test_namespace_id_unmarshal_json_namespace_dash": {
+			arg: []byte("\"test-namespace:testId\""),
+			want: &NamespacedID{
+				Namespace: "test-namespace",
+				Name:      "testId",
+			},
+			wantErr: nil,
+		},
+		"test_namespace_id_unmarshal_json_namespace_dash_dot": {
+			arg: []byte("\"test.namespace-id:testId\""),
+			want: &NamespacedID{
+				Namespace: "test.namespace-id",
+				Name:      "testId",
+			},
+			wantErr: nil,
 		},
 		"test_namespaced_id_unmarshal_json_invalid": {
-			arg:     []byte("\"test:namespace\\testId\""),
-			wantErr: true,
+			arg: []byte("\"test:namespace\\testId\""),
+			wantErr: errors.New("invalid NamespacedID: test:namespace	estId"),
 		},
 		"test_namespaced_id_unmarshal_json_empty": {
 			arg:     []byte(""),
-			wantErr: true,
+			wantErr: errors.New("unexpected end of JSON input"),
 		},
 		"test_namespaced_id_unmarshal_json_invalid_argument": {
 			arg:     []byte("test.namespace:testId"),
-			wantErr: true,
+			wantErr: errors.New("invalid character 'e' in literal true (expecting 'r')"),
 		},
 	}
 
@@ -182,14 +239,10 @@ func TestNamespaceIDUnmarshalJSON(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			got := &NamespacedID{}
 			err := got.UnmarshalJSON(testCase.arg)
-			if testCase.wantErr {
-				if err == nil {
-					t.Errorf("NamespacedID.UnmarshalJSON() error must not be nil")
-				}
+			if testCase.wantErr != nil {
+				internal.AssertError(t, err, testCase.wantErr)
 			} else {
-				if !reflect.DeepEqual(got, testCase.want) {
-					t.Errorf("NamespacedID.UnmarshalJSON() = %v, want %v", got, testCase.want)
-				}
+				internal.AssertEqual(t, got, testCase.want)
 			}
 		})
 	}
@@ -207,9 +260,8 @@ func TestNamespaceIDWithNamespace(t *testing.T) {
 		Name:      "testId",
 	}
 
-	if got := testNamespaceID.WithNamespace(arg); !reflect.DeepEqual(got, want) {
-		t.Errorf("NamespacedID.WithNamespace() = %v, want %v", got, want)
-	}
+	got := testNamespaceID.WithNamespace(arg)
+	internal.AssertEqual(t, got, want)
 }
 
 func TestNamespaceIDWithName(t *testing.T) {
@@ -224,7 +276,6 @@ func TestNamespaceIDWithName(t *testing.T) {
 		Name:      "testId",
 	}
 
-	if got := testNamespace.WithName(arg); !reflect.DeepEqual(got, want) {
-		t.Errorf("NamespacedID.WithName() = %v, want %v", got, want)
-	}
+	got := testNamespace.WithName(arg)
+	internal.AssertEqual(t, got, want)
 }
