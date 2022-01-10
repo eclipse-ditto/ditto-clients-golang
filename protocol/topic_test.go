@@ -25,38 +25,38 @@ func TestTopicString(t *testing.T) {
 		{
 			name: "TestTopicString GroupThings",
 			topic: Topic{
-				Namespace: "anamespace",
-				EntityID:  "aentityid",
-				Group:     GroupThings,
-				Channel:   ChannelTwin,
-				Criterion: CriterionMessages,
-				Action:    ActionSubscribe,
+				Namespace:  "namespace",
+				EntityName: "entity_name",
+				Group:      GroupThings,
+				Channel:    ChannelTwin,
+				Criterion:  CriterionMessages,
+				Action:     ActionSubscribe,
 			},
-			want: "anamespace/aentityid/" + string(GroupThings) + "/" + string(ChannelTwin) + "/" +
+			want: "namespace/entity_name/" + string(GroupThings) + "/" + string(ChannelTwin) + "/" +
 				string(CriterionMessages) + "/" + string(ActionSubscribe),
 		},
 		{
 			name: "TestTopicString GroupPolicies",
 			topic: Topic{
-				Namespace: "anamespace",
-				EntityID:  "aentityid",
-				Group:     GroupPolicies,
-				Channel:   "",
-				Criterion: CriterionCommands,
-				Action:    ActionCreate,
+				Namespace:  "namespace",
+				EntityName: "entity_name",
+				Group:      GroupPolicies,
+				Channel:    "",
+				Criterion:  CriterionCommands,
+				Action:     ActionCreate,
 			},
-			want: "anamespace/aentityid/" + string(GroupPolicies) + "/" +
+			want: "namespace/entity_name/" + string(GroupPolicies) + "/" +
 				string(CriterionCommands) + "/" + string(ActionCreate),
 		},
 		{
 			name: "TestTopicString empty",
 			topic: Topic{
-				Namespace: "anamespace",
-				EntityID:  "aentityid",
-				Group:     "",
-				Channel:   "",
-				Criterion: CriterionCommands,
-				Action:    ActionCreate,
+				Namespace:  "namespace",
+				EntityName: "entity_name",
+				Group:      "",
+				Channel:    "",
+				Criterion:  CriterionCommands,
+				Action:     ActionCreate,
 			},
 			want: "",
 		}}
@@ -74,15 +74,15 @@ func TestTopicString(t *testing.T) {
 func TestTopicMarshalJSON(t *testing.T) {
 	t.Run("TestTopicMarshalJSON", func(t *testing.T) {
 		topic := Topic{
-			Namespace: "namespace",
-			EntityID:  "entityid",
-			Group:     GroupThings,
-			Channel:   ChannelTwin,
-			Criterion: CriterionMessages,
-			Action:    ActionSubscribe,
+			Namespace:  "namespace",
+			EntityName: "entity_name",
+			Group:      GroupThings,
+			Channel:    ChannelTwin,
+			Criterion:  CriterionMessages,
+			Action:     ActionSubscribe,
 		}
 		got, err := topic.MarshalJSON()
-		grp := "\"namespace/entityid/" + string(GroupThings) +
+		grp := "\"namespace/entity_name/" + string(GroupThings) +
 			"/" + string(ChannelTwin) + "/" + string(CriterionMessages) + "/" +
 			string(ActionSubscribe) + "\""
 		if err != nil {
@@ -104,7 +104,7 @@ func TestTopicUnmarshalJSON(t *testing.T) {
 	}{
 		{
 			name: "TestTopicUnmarshalJSON GroupThings",
-			data: "anamespace/aentityid/" +
+			data: "namespace/entity_name/" +
 				string(GroupThings) + "/" + string(ChannelTwin) + "/" + string(CriterionMessages) + "/" +
 				string(ActionSubscribe),
 			wantErr:               false,
@@ -112,7 +112,7 @@ func TestTopicUnmarshalJSON(t *testing.T) {
 		},
 		{
 			name: "TestTopicUnmarshalJSON GroupPolicies",
-			data: "anamespace/aentityid/" +
+			data: "namespace/entity_name/" +
 				string(GroupPolicies) + "/" + string(CriterionCommands) + "/" + string(ActionCreate),
 			wantErr:               false,
 			onlyForUnmarshalError: false,
@@ -125,7 +125,7 @@ func TestTopicUnmarshalJSON(t *testing.T) {
 		},
 		{
 			name: "TestTopicUnmarshalJSON GroupThings for missing channel for things",
-			data: "anamespace/aentityid/" +
+			data: "namespace/entity_name/" +
 				string(GroupThings) + "/" /*+ string(ChannelTwin) + "/"*/ + string(CriterionMessages) + "/" +
 				string(ActionSubscribe),
 			wantErr:               true,
@@ -133,7 +133,7 @@ func TestTopicUnmarshalJSON(t *testing.T) {
 		},
 		{
 			name: "TestTopicUnmarshalJSON GroupThings insufficient elements for things",
-			data: "anamespace/aentityid/" +
+			data: "namespace/entity_name/" +
 				string(GroupThings) + "/" + string(ChannelTwin) + "/" + string(CriterionMessages),
 			wantErr:               true,
 			onlyForUnmarshalError: false,
@@ -152,13 +152,12 @@ func TestTopicUnmarshalJSON(t *testing.T) {
 		},
 		{
 			name: "TestTopicUnmarshalJSON only for internal error",
-			data: "anamespace/aentityid/" +
+			data: "namespace/entity_name/" +
 				string(GroupThings) + "/" + string(ChannelTwin) + "/" + string(CriterionMessages) + "/" +
 				string(ActionSubscribe),
 			wantErr:               true,
 			onlyForUnmarshalError: true,
 		},
-	
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -206,7 +205,7 @@ func TestTopicUnmarshalJSON(t *testing.T) {
 
 func TestTopicWithNamespace(t *testing.T) {
 	t.Run("TestTopicWithNamespace", func(t *testing.T) {
-		arg := "anamespace"
+		arg := "namespace"
 		topic := Topic{}
 		if got := topic.WithNamespace(arg); !reflect.DeepEqual(got.Namespace, arg) {
 			t.Errorf("Topic.WithNamespace() = %v, want %v", got.Namespace, arg)
@@ -214,12 +213,12 @@ func TestTopicWithNamespace(t *testing.T) {
 	})
 }
 
-func TestTopicWithEntityID(t *testing.T) {
-	t.Run("TestTopicWithEntityID", func(t *testing.T) {
-		arg := "EntityID"
+func TestTopicWithEntityName(t *testing.T) {
+	t.Run("TestTopicWithEntityName", func(t *testing.T) {
+		arg := "EntityName"
 		topic := Topic{}
-		if got := topic.WithEntityID(arg); !reflect.DeepEqual(got.EntityID, arg) {
-			t.Errorf("Topic.WithEntityID() = %v, want %v", got.EntityID, arg)
+		if got := topic.WithEntityName(arg); !reflect.DeepEqual(got.EntityName, arg) {
+			t.Errorf("Topic.WithEntityName() = %v, want %v", got.EntityName, arg)
 		}
 	})
 }

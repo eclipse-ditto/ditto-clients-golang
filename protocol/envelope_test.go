@@ -19,12 +19,12 @@ import (
 func TestEnvelopeWithTopic(t *testing.T) {
 	t.Run("TestEnvelopeWithTopic", func(t *testing.T) {
 		arg := &Topic{
-			Namespace: "anamespace",
-			EntityID:  "aentityid",
-			Group:     GroupThings,
-			Channel:   ChannelTwin,
-			Criterion: CriterionMessages,
-			Action:    ActionSubscribe,
+			Namespace:  "namespace",
+			EntityName: "entity_name",
+			Group:      GroupThings,
+			Channel:    ChannelTwin,
+			Criterion:  CriterionMessages,
+			Action:     ActionSubscribe,
 		}
 		msg := &Envelope{}
 		if got := msg.WithTopic(arg); !reflect.DeepEqual(got.Topic, arg) {

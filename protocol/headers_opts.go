@@ -34,9 +34,9 @@ func NewHeaders(opts ...HeaderOpt) *Headers {
 	return res
 }
 
-func WithCorrelationID(correlationId string) HeaderOpt {
+func WithCorrelationID(correlationID string) HeaderOpt {
 	return func(headers *Headers) error {
-		headers.Values[HeaderCorrelationID] = correlationId
+		headers.Values[HeaderCorrelationID] = correlationID
 		return nil
 	}
 }

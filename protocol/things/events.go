@@ -40,7 +40,7 @@ func NewEvent(thingID *model.NamespacedID) *Event {
 	return &Event{
 		Topic: (&protocol.Topic{}).
 			WithNamespace(thingID.Namespace).
-			WithEntityID(thingID.Name).
+			WithEntityName(thingID.Name).
 			WithGroup(protocol.GroupThings).
 			WithChannel(protocol.ChannelTwin).
 			WithCriterion(protocol.CriterionEvents),

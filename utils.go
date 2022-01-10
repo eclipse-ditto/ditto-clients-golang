@@ -27,10 +27,10 @@ const (
 	honoMQTTTopicCommandResponseFormat = "command///res/%s/%d"
 )
 
-func extractHonoRequestId(honoTopic string) string {
+func extractHonoRequestID(honoTopic string) string {
 	if regexHonoMQTTTopicRequest.MatchString(honoTopic) {
-		reqIdInfo := regexHonoMQTTTopicRequest.FindStringSubmatch(honoTopic)
-		return reqIdInfo[1]
+		reqIDInfo := regexHonoMQTTTopicRequest.FindStringSubmatch(honoTopic)
+		return reqIDInfo[1]
 	}
 	return ""
 }
@@ -40,7 +40,7 @@ func generateHonoResponseTopic(requestID string, status int) string {
 }
 
 func getEnvelope(mqttPayload []byte) (*protocol.Envelope, error) {
-	env := &protocol.Envelope{}
+	env := &protocol.Envelope{Headers: protocol.NewHeaders()}
 	if err := json.Unmarshal(mqttPayload, env); err != nil {
 		return nil, err
 	}

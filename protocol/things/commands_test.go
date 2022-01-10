@@ -34,11 +34,11 @@ var (
 func TestNewCommand(t *testing.T) {
 	want := &Command{
 		Topic: &protocol.Topic{
-			Namespace: testNamespaceID.Namespace,
-			EntityID:  testNamespaceID.Name,
-			Group:     protocol.GroupThings,
-			Channel:   protocol.ChannelTwin,
-			Criterion: protocol.CriterionCommands,
+			Namespace:  testNamespaceID.Namespace,
+			EntityName: testNamespaceID.Name,
+			Group:      protocol.GroupThings,
+			Channel:    protocol.ChannelTwin,
+			Criterion:  protocol.CriterionCommands,
 		},
 		Path: pathThing,
 	}

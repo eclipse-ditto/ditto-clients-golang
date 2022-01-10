@@ -36,14 +36,14 @@ func (thing *Thing) WithIDFrom(id string) *Thing {
 }
 
 // WithDefinition sets the current Thing instance's definition to the provided value.
-func (thing *Thing) WithDefinition(definition *DefinitionID) *Thing {
-	thing.DefinitionID = definition
+func (thing *Thing) WithDefinition(definitionID *DefinitionID) *Thing {
+	thing.DefinitionID = definitionID
 	return thing
 }
 
 // WithDefinitionFrom is an auxiliary method to set the current Thing instance's definition to the provided one in the form of 'namespace:name:version'.
-func (thing *Thing) WithDefinitionFrom(definitionId string) *Thing {
-	thing.DefinitionID = NewDefinitionIDFrom(definitionId)
+func (thing *Thing) WithDefinitionFrom(definitionID string) *Thing {
+	thing.DefinitionID = NewDefinitionIDFrom(definitionID)
 	return thing
 }
 
@@ -55,8 +55,8 @@ func (thing *Thing) WithPolicyID(policyID *NamespacedID) *Thing {
 
 // WithPolicyIDFrom is an auxiliary method that sets the Policy ID of the current Thing instance
 // from a string NamespacedID representation in the form of 'namespace:name'.
-func (thing *Thing) WithPolicyIDFrom(policyId string) *Thing {
-	thing.PolicyID = NewNamespacedIDFrom(policyId)
+func (thing *Thing) WithPolicyIDFrom(policyID string) *Thing {
+	thing.PolicyID = NewNamespacedIDFrom(policyID)
 	return thing
 }
 
