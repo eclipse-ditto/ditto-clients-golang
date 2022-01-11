@@ -28,15 +28,15 @@ func TestHonoMessageHandlingSuccess(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+	mockMQTTMessage := mock.NewMockMessage(mockCtrl)
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
 	unitUnderTest := NewClient(&Configuration{})
 	validMessage := []byte("{\"test\": 15}")
-	requestId := "expected"
-	topic := createTopic(requestId)
+	requestID := "expected"
+	topic := createTopic(requestID)
 
 	expectedEnvelope, _ := getEnvelope(validMessage)
 
@@ -45,11 +45,11 @@ func TestHonoMessageHandlingSuccess(t *testing.T) {
 		wg.Done()
 	}
 
-	mockMqttMessage.EXPECT().Payload().Return(validMessage)
-	mockMqttMessage.EXPECT().Topic().Return(topic)
+	mockMQTTMessage.EXPECT().Payload().Return(validMessage)
+	mockMQTTMessage.EXPECT().Topic().Return(topic)
 
 	unitUnderTest.Subscribe(handler)
-	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
+	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
 
 	internal.AssertWithTimeout(t, &wg, 5)
 }
@@ -58,46 +58,46 @@ func TestHonoInvalidMesssageHandling(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+	mockMQTTMessage := mock.NewMockMessage(mockCtrl)
 
 	unitUnderTest := NewClient(&Configuration{})
-	invalidJson := []byte("{\"t\"}")
+	invalidJSON := []byte("{\"t\"}")
 
 	handler := func(requestID string, message *protocol.Envelope) {
 		t.Errorf("handler should not be called")
 		t.Fail()
 	}
 
-	mockMqttMessage.EXPECT().Payload().Return(invalidJson)
+	mockMQTTMessage.EXPECT().Payload().Return(invalidJSON)
 
 	unitUnderTest.Subscribe(handler)
-	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
+	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
 }
 
 func TestHonoWithoutHandlersDoesNotPanic(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+	mockMQTTMessage := mock.NewMockMessage(mockCtrl)
 
 	unitUnderTest := NewClient(&Configuration{})
 
-	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
+	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
 }
 
 func TestHonoMultipleHanlders(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+	mockMQTTMessage := mock.NewMockMessage(mockCtrl)
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
 	unitUnderTest := NewClient(&Configuration{})
 	validMessage := []byte("{\"test\": 15}")
-	requestId := "expected"
-	topic := createTopic(requestId)
+	requestID := "expected"
+	topic := createTopic(requestID)
 
 	expectedEnvelope, _ := getEnvelope(validMessage)
 
@@ -111,13 +111,13 @@ func TestHonoMultipleHanlders(t *testing.T) {
 		wg.Done()
 	}
 
-	mockMqttMessage.EXPECT().Payload().Return(validMessage)
-	mockMqttMessage.EXPECT().Topic().Return(topic)
+	mockMQTTMessage.EXPECT().Payload().Return(validMessage)
+	mockMQTTMessage.EXPECT().Topic().Return(topic)
 
 	unitUnderTest.Subscribe(handlerOne)
 	unitUnderTest.Subscribe(handlerTwo)
 
-	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
+	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
 
 	internal.AssertWithTimeout(t, &wg, 5)
 }
@@ -126,7 +126,7 @@ func TestHonoAddMultipleHanlders(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+	mockMQTTMessage := mock.NewMockMessage(mockCtrl)
 
 	wg := sync.WaitGroup{}
 	wg.Add(2)
@@ -134,8 +134,8 @@ func TestHonoAddMultipleHanlders(t *testing.T) {
 	unitUnderTest := NewClient(&Configuration{})
 
 	validMessage := []byte("{\"test\": 15}")
-	requestId := "expected"
-	topic := createTopic(requestId)
+	requestID := "expected"
+	topic := createTopic(requestID)
 
 	expectedEnvelope, _ := getEnvelope(validMessage)
 
@@ -149,12 +149,12 @@ func TestHonoAddMultipleHanlders(t *testing.T) {
 		wg.Done()
 	}
 
-	mockMqttMessage.EXPECT().Payload().Return(validMessage)
-	mockMqttMessage.EXPECT().Topic().Return(topic)
+	mockMQTTMessage.EXPECT().Payload().Return(validMessage)
+	mockMQTTMessage.EXPECT().Topic().Return(topic)
 
 	unitUnderTest.Subscribe(handlerOne, handlerTwo)
 
-	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
+	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
 
 	internal.AssertWithTimeout(t, &wg, 5)
 }
@@ -163,7 +163,7 @@ func TestRemoveAllHanlders(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+	mockMQTTMessage := mock.NewMockMessage(mockCtrl)
 
 	unitUnderTest := NewClient(&Configuration{})
 
@@ -177,15 +177,15 @@ func TestRemoveAllHanlders(t *testing.T) {
 		t.Fail()
 	}
 
-	mockMqttMessage.EXPECT().Payload().Times(0)
-	mockMqttMessage.EXPECT().Topic().Times(0)
+	mockMQTTMessage.EXPECT().Payload().Times(0)
+	mockMQTTMessage.EXPECT().Topic().Times(0)
 
 	// We already know this works from another test
 	unitUnderTest.Subscribe(handlerOne, handlerTwo)
 
 	unitUnderTest.Unsubscribe()
 
-	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
+	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
 
 }
 
@@ -193,7 +193,7 @@ func TestRemoveSingleHanlder(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	mockMqttMessage := mock.NewMockMessage(mockCtrl)
+	mockMQTTMessage := mock.NewMockMessage(mockCtrl)
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -201,8 +201,8 @@ func TestRemoveSingleHanlder(t *testing.T) {
 	unitUnderTest := NewClient(&Configuration{})
 
 	validMessage := []byte("{\"test\": 15}")
-	requestId := "expected"
-	topic := createTopic(requestId)
+	requestID := "expected"
+	topic := createTopic(requestID)
 	expectedEnvelope, _ := getEnvelope(validMessage)
 
 	handlerOne := func(requestID string, message *protocol.Envelope) {
@@ -215,14 +215,14 @@ func TestRemoveSingleHanlder(t *testing.T) {
 		t.Fail()
 	}
 
-	mockMqttMessage.EXPECT().Payload().Return(validMessage)
-	mockMqttMessage.EXPECT().Topic().Return(topic)
+	mockMQTTMessage.EXPECT().Payload().Return(validMessage)
+	mockMQTTMessage.EXPECT().Topic().Return(topic)
 
 	unitUnderTest.Subscribe(handlerOne, handlerTwo)
 
 	unitUnderTest.Unsubscribe(handlerTwo)
 
-	unitUnderTest.honoMessageHandler(nil, mockMqttMessage)
+	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
 	internal.AssertWithTimeout(t, &wg, 5)
 }
 
@@ -234,6 +234,6 @@ func TestGetHandlerName(t *testing.T) {
 	internal.AssertEqual(t, expectedName, actualName)
 }
 
-func createTopic(requestId string) string {
-	return fmt.Sprintf("command///req/%s/dosomething", requestId)
+func createTopic(requestID string) string {
+	return fmt.Sprintf("command///req/%s/dosomething", requestID)
 }

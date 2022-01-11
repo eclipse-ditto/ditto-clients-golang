@@ -55,15 +55,15 @@ func NewDefinitionID(namespace string, name string, version string) *DefinitionI
 }
 
 // String provides the string representation of a DefinitionID in the Ditto's specified form of 'namespace:name:version'.
-func (definitionId *DefinitionID) String() string {
-	return fmt.Sprintf(definitionIDTemplate, definitionId.Namespace, definitionId.Name, definitionId.Version)
+func (definitionID *DefinitionID) String() string {
+	return fmt.Sprintf(definitionIDTemplate, definitionID.Namespace, definitionID.Name, definitionID.Version)
 }
 
-func (definitionId *DefinitionID) MarshalJSON() ([]byte, error) {
-	return json.Marshal(definitionId.String())
+func (definitionID *DefinitionID) MarshalJSON() ([]byte, error) {
+	return json.Marshal(definitionID.String())
 }
 
-func (definitionId *DefinitionID) UnmarshalJSON(data []byte) error {
+func (definitionID *DefinitionID) UnmarshalJSON(data []byte) error {
 	var defIDString = ""
 
 	if err := json.Unmarshal(data, &defIDString); err != nil {
@@ -75,28 +75,28 @@ func (definitionId *DefinitionID) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	definitionId.Namespace = matches[1]
-	definitionId.Name = matches[2]
-	definitionId.Version = matches[3]
+	definitionID.Namespace = matches[1]
+	definitionID.Name = matches[2]
+	definitionID.Version = matches[3]
 	return nil
 }
 
 // WithNamespace sets the provided namespace to the current DefinitionID instance.
-func (definitionId *DefinitionID) WithNamespace(namespace string) *DefinitionID {
-	definitionId.Namespace = namespace
-	return definitionId
+func (definitionID *DefinitionID) WithNamespace(namespace string) *DefinitionID {
+	definitionID.Namespace = namespace
+	return definitionID
 }
 
 // WithName sets the provided name to the current DefinitionID instance.
-func (definitionId *DefinitionID) WithName(name string) *DefinitionID {
-	definitionId.Name = name
-	return definitionId
+func (definitionID *DefinitionID) WithName(name string) *DefinitionID {
+	definitionID.Name = name
+	return definitionID
 }
 
 // WithVersion sets the provided version to the current DefinitionID instance.
-func (definitionId *DefinitionID) WithVersion(version string) *DefinitionID {
-	definitionId.Version = version
-	return definitionId
+func (definitionID *DefinitionID) WithVersion(version string) *DefinitionID {
+	definitionID.Version = version
+	return definitionID
 }
 
 func validateDefinitionID(defIDString string) ([]string, error) {

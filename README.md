@@ -43,7 +43,7 @@ With this configuration a client instance could be created.
 ```go
 client = ditto.NewClient(config)
 ```
-**_NOTE:_** In some cases an external Paho instance could be provided for the communication. If this is the case, there is a ditto.NewClientMqtt() create function available.
+**_NOTE:_** In some cases an external Paho instance could be provided for the communication. If this is the case, there is a ditto.NewClientMQTT() create function available.
 
 After you have configured and created your client instance, it's ready to be connected.
 ```go

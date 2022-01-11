@@ -28,12 +28,12 @@ import (
 )
 
 var (
-	mockMqttClient *mock.MockClient
+	mockMQTTClient *mock.MockClient
 	mockToken      *mock.MockToken
 )
 
 func setup(controller *gomock.Controller) {
-	mockMqttClient = mock.NewMockClient(controller)
+	mockMQTTClient = mock.NewMockClient(controller)
 	mockToken = mock.NewMockToken(controller)
 }
 
@@ -50,9 +50,9 @@ func TestNewClient(t *testing.T) {
 	}
 }
 
-type mockExecNewClientMqtt func(mockMqttClient *mock.MockClient, config *Configuration, message string) (*Client, error)
+type mockExecNewClientMQTT func(mockMQTTClient *mock.MockClient, config *Configuration, message string) (*Client, error)
 
-func TestNewClientMqtt(t *testing.T) {
+func TestNewClientMQTT(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
@@ -60,63 +60,63 @@ func TestNewClientMqtt(t *testing.T) {
 
 	tests := map[string]struct {
 		arg           *Configuration
-		mockExecution mockExecNewClientMqtt
+		mockExecution mockExecNewClientMQTT
 		errorMassage  string
 	}{
 		"test_connected_client": {
 			arg:           &Configuration{},
-			mockExecution: mockExecNewClientMqttNoErrors,
+			mockExecution: mockExecNewClientMQTTNoErrors,
 		},
 		"test_not_connected_client": {
 			arg:           &Configuration{},
-			mockExecution: mockExecNewClientMqttNotConnectedError,
+			mockExecution: mockExecNewClientMQTTNotConnectedError,
 			errorMassage:  "MQTT client is not connected",
 		},
 		"test_configuration_nil": {
 			arg:           nil,
-			mockExecution: mockExecNewClientMqttNoErrors,
+			mockExecution: mockExecNewClientMQTTNoErrors,
 		},
 		"test_configuration_broker_error": {
 			arg: &Configuration{
 				broker: "nil",
 			},
-			mockExecution: mockExecNewClientMqttConfigurationError,
+			mockExecution: mockExecNewClientMQTTConfigurationError,
 			errorMassage:  "broker is not expected when using external MQTT client",
 		},
 		"test_configuration_credentials_error": {
 			arg: &Configuration{
 				credentials: &Credentials{},
 			},
-			mockExecution: mockExecNewClientMqttConfigurationError,
+			mockExecution: mockExecNewClientMQTTConfigurationError,
 			errorMassage:  "credentials are not expected when using external MQTT client",
 		},
 		"test_configuration_disconnect_timeout_error": {
 			arg: &Configuration{
 				disconnectTimeout: 50,
 			},
-			mockExecution: mockExecNewClientMqttConfigurationError,
+			mockExecution: mockExecNewClientMQTTConfigurationError,
 			errorMassage:  "disconnectTimeout is not expected when using external MQTT client",
 		},
 		"test_configuration_keep_alive_error": {
 			arg: &Configuration{
 				keepAlive: 50,
 			},
-			mockExecution: mockExecNewClientMqttConfigurationError,
+			mockExecution: mockExecNewClientMQTTConfigurationError,
 			errorMassage:  "keepAlive is not expected when using external MQTT client",
 		},
 		"test_configuration_TLS_configuration_error": {
 			arg: &Configuration{
 				tlsConfig: &tls.Config{},
 			},
-			mockExecution: mockExecNewClientMqttConfigurationError,
+			mockExecution: mockExecNewClientMQTTConfigurationError,
 			errorMassage:  "TLS configuration is not expected when using external MQTT client",
 		},
 	}
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			expectedClient, expectedError := testCase.mockExecution(mockMqttClient, testCase.arg, testCase.errorMassage)
-			actualClient, actualError := NewClientMqtt(mockMqttClient, testCase.arg)
+			expectedClient, expectedError := testCase.mockExecution(mockMQTTClient, testCase.arg, testCase.errorMassage)
+			actualClient, actualError := NewClientMQTT(mockMQTTClient, testCase.arg)
 
 			internal.AssertEqual(t, expectedClient, actualClient)
 			internal.AssertError(t, expectedError, actualError)
@@ -145,15 +145,15 @@ func TestConnect(t *testing.T) {
 						testWg.Done()
 					},
 				},
-				pahoClient:         mockMqttClient,
-				externalMqttClient: true,
+				pahoClient:         mockMQTTClient,
+				externalMQTTClient: true,
 			},
 			mockExec: mockExecConnectNoError,
 		},
 		"test_external_mqtt_client_error": {
 			client: &Client{
-				pahoClient:         mockMqttClient,
-				externalMqttClient: true,
+				pahoClient:         mockMQTTClient,
+				externalMQTTClient: true,
 			},
 			mockExec: mockExecConnectError,
 		},
@@ -179,13 +179,13 @@ func TestDisconnectInternalClient(t *testing.T) {
 		cfg: &Configuration{
 			disconnectTimeout: defaultDisconnectTimeout,
 		},
-		pahoClient:         mockMqttClient,
-		externalMqttClient: false,
+		pahoClient:         mockMQTTClient,
+		externalMQTTClient: false,
 	}
 
-	mockMqttClient.EXPECT().Unsubscribe(honoMQTTTopicSubscribeCommands).Return(mockToken)
+	mockMQTTClient.EXPECT().Unsubscribe(honoMQTTTopicSubscribeCommands).Return(mockToken)
 	mockToken.EXPECT().Wait().Return(false)
-	mockMqttClient.EXPECT().Disconnect(uint(client.cfg.disconnectTimeout.Milliseconds())).Times(1)
+	mockMQTTClient.EXPECT().Disconnect(uint(client.cfg.disconnectTimeout.Milliseconds())).Times(1)
 
 	client.Disconnect()
 }
@@ -212,8 +212,8 @@ func TestDisconnectExternalClient(t *testing.T) {
 						testWg.Done()
 					},
 				},
-				pahoClient:         mockMqttClient,
-				externalMqttClient: true,
+				pahoClient:         mockMQTTClient,
+				externalMQTTClient: true,
 			},
 			err:      MQTT.ErrNotConnected,
 			mockExec: mockExecUnsubscribeError,
@@ -225,8 +225,8 @@ func TestDisconnectExternalClient(t *testing.T) {
 						testWg.Done()
 					},
 				},
-				pahoClient:         mockMqttClient,
-				externalMqttClient: true,
+				pahoClient:         mockMQTTClient,
+				externalMQTTClient: true,
 			},
 			mockExec: mockExecUnsubscribeNoError,
 		},
@@ -251,7 +251,7 @@ func TestReply(t *testing.T) {
 	setup(mockCtrl)
 
 	client := &Client{
-		pahoClient: mockMqttClient,
+		pahoClient: mockMQTTClient,
 	}
 
 	tests := map[string]struct {
@@ -289,7 +289,7 @@ func TestSend(t *testing.T) {
 	setup(mockCtrl)
 
 	client := &Client{
-		pahoClient: mockMqttClient,
+		pahoClient: mockMQTTClient,
 	}
 
 	tests := map[string]struct {
@@ -446,32 +446,32 @@ func TestUnsubscribe(t *testing.T) {
 }
 
 // Mock executions -------------------------------------------------------------
-// NewClientMqtt -------------------------------------------------------------
-func mockExecNewClientMqttNoErrors(mockMqttClient *mock.MockClient, config *Configuration, _ string) (*Client, error) {
-	mockMqttClient.EXPECT().IsConnected().Return(true)
+// NewClientMQTT -------------------------------------------------------------
+func mockExecNewClientMQTTNoErrors(mockMQTTClient *mock.MockClient, config *Configuration, _ string) (*Client, error) {
+	mockMQTTClient.EXPECT().IsConnected().Return(true)
 	return &Client{
 		cfg:                config,
-		pahoClient:         mockMqttClient,
-		externalMqttClient: true,
+		pahoClient:         mockMQTTClient,
+		externalMQTTClient: true,
 	}, nil
 }
 
-func mockExecNewClientMqttNotConnectedError(mockMqttClient *mock.MockClient, config *Configuration, message string) (*Client, error) {
-	mockMqttClient.EXPECT().IsConnected().Return(false)
+func mockExecNewClientMQTTNotConnectedError(mockMQTTClient *mock.MockClient, config *Configuration, message string) (*Client, error) {
+	mockMQTTClient.EXPECT().IsConnected().Return(false)
 	err := errors.New(message)
 	return nil, err
 }
 
-func mockExecNewClientMqttConfigurationError(mockMqttClient *mock.MockClient, config *Configuration, message string) (*Client, error) {
-	mockMqttClient.EXPECT().IsConnected().Return(true)
+func mockExecNewClientMQTTConfigurationError(mockMQTTClient *mock.MockClient, config *Configuration, message string) (*Client, error) {
+	mockMQTTClient.EXPECT().IsConnected().Return(true)
 	err := errors.New(message)
 	return nil, err
 }
 
-// MqttClientPublish -------------------------------------------------------------
+// MQTTClientPublish -------------------------------------------------------------
 func mockExecPublishNoErrors(topic string, payload interface{}) error {
 	mockToken.EXPECT().Wait().Return(false)
-	mockMqttClient.EXPECT().Publish(topic, byte(1), false, payload).Return(mockToken)
+	mockMQTTClient.EXPECT().Publish(topic, byte(1), false, payload).Return(mockToken)
 	return nil
 }
 
@@ -479,34 +479,34 @@ func mockExecPublishErrors(topic string, payload interface{}) error {
 	err := MQTT.ErrNotConnected
 	mockToken.EXPECT().Wait().Return(true)
 	mockToken.EXPECT().Error().AnyTimes().Return(err)
-	mockMqttClient.EXPECT().Publish(topic, byte(1), false, payload).Return(mockToken)
+	mockMQTTClient.EXPECT().Publish(topic, byte(1), false, payload).Return(mockToken)
 	return err
 }
 
-// MqttClientDisconnect -------------------------------------------------------------
+// MQTTClientDisconnect -------------------------------------------------------------
 func mockExecUnsubscribeNoError(client *Client, _ error) {
-	mockMqttClient.EXPECT().Unsubscribe(honoMQTTTopicSubscribeCommands).Return(mockToken)
+	mockMQTTClient.EXPECT().Unsubscribe(honoMQTTTopicSubscribeCommands).Return(mockToken)
 	mockToken.EXPECT().Wait().Return(false)
-	mockMqttClient.EXPECT().Disconnect(uint(client.cfg.disconnectTimeout.Milliseconds())).Times(0)
+	mockMQTTClient.EXPECT().Disconnect(uint(client.cfg.disconnectTimeout.Milliseconds())).Times(0)
 }
 
 func mockExecUnsubscribeError(client *Client, err error) {
-	mockMqttClient.EXPECT().Unsubscribe(honoMQTTTopicSubscribeCommands).Return(mockToken)
+	mockMQTTClient.EXPECT().Unsubscribe(honoMQTTTopicSubscribeCommands).Return(mockToken)
 	mockToken.EXPECT().Wait().Return(true)
 	mockToken.EXPECT().Error().AnyTimes().Return(err)
 }
 
-// MqttClientConnect -------------------------------------------------------------
+// MQTTClientConnect -------------------------------------------------------------
 func mockExecConnectNoError(testWg *sync.WaitGroup) error {
 	testWg.Add(1)
 	var qos byte = 1
-	mockMqttClient.EXPECT().Subscribe(honoMQTTTopicSubscribeCommands, qos, gomock.Any()).Return(mockToken)
+	mockMQTTClient.EXPECT().Subscribe(honoMQTTTopicSubscribeCommands, qos, gomock.Any()).Return(mockToken)
 	mockToken.EXPECT().Wait().Return(false)
 	return nil
 }
 
 func mockExecConnectError(testWg *sync.WaitGroup) error {
-	mockMqttClient.EXPECT().Subscribe(honoMQTTTopicSubscribeCommands, byte(1), gomock.Any()).Return(mockToken)
+	mockMQTTClient.EXPECT().Subscribe(honoMQTTTopicSubscribeCommands, byte(1), gomock.Any()).Return(mockToken)
 	mockToken.EXPECT().Wait().Return(true)
 	mockToken.EXPECT().Error().AnyTimes().Return(MQTT.ErrNotConnected)
 	return MQTT.ErrNotConnected

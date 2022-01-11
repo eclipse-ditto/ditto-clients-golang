@@ -32,7 +32,7 @@ type Client struct {
 	pahoClient         MQTT.Client
 	handlers           map[string]Handler
 	handlersLock       sync.RWMutex
-	externalMqttClient bool
+	externalMQTTClient bool
 	wgConnectHandler   sync.WaitGroup
 }
 
@@ -45,7 +45,7 @@ func NewClient(cfg *Configuration) *Client {
 	return client
 }
 
-// NewClientMqtt creates a new Client instance with the Configuration, if such is provided, that is going
+// NewClientMQTT creates a new Client instance with the Configuration, if such is provided, that is going
 // to use the external MQTT client.
 //
 // It is expected that the provided MQTT client is already connected. So this Client must be controlled
@@ -55,7 +55,7 @@ func NewClient(cfg *Configuration) *Client {
 // As an external MQTT client is used, other fields are not needed and regarded as invalid ones.
 //
 // Returns an error if the provided MQTT client is not connected or the Configuration contains invalid fields.
-func NewClientMqtt(mqttClient MQTT.Client, cfg *Configuration) (*Client, error) {
+func NewClientMQTT(mqttClient MQTT.Client, cfg *Configuration) (*Client, error) {
 	if !mqttClient.IsConnected() {
 		return nil, errors.New("MQTT client is not connected")
 	}
@@ -67,7 +67,7 @@ func NewClientMqtt(mqttClient MQTT.Client, cfg *Configuration) (*Client, error) 
 	client := &Client{
 		cfg:                cfg,
 		pahoClient:         mqttClient,
-		externalMqttClient: true,
+		externalMQTTClient: true,
 	}
 	return client, nil
 }
@@ -83,7 +83,7 @@ func NewClientMqtt(mqttClient MQTT.Client, cfg *Configuration) (*Client, error) 
 // there is a provided ConnectHandler, it will be notified.
 // In the case of an external MQTT client, if any error occurs during the internal preparations - it's returned here.
 func (client *Client) Connect() error {
-	if client.externalMqttClient {
+	if client.externalMQTTClient {
 		client.wgConnectHandler.Add(1)
 		if token := client.pahoClient.Subscribe(honoMQTTTopicSubscribeCommands, 1, client.honoMessageHandler); token.Wait() && token.Error() != nil {
 			client.wgConnectHandler.Done()
@@ -124,14 +124,14 @@ func (client *Client) Connect() error {
 // only if an external MQTT client is used.
 func (client *Client) Disconnect() {
 	if token := client.pahoClient.Unsubscribe(honoMQTTTopicSubscribeCommands); token.Wait() && token.Error() != nil {
-		if client.externalMqttClient && token.Error() == MQTT.ErrNotConnected {
+		if client.externalMQTTClient && token.Error() == MQTT.ErrNotConnected {
 			go client.notifyClientConnectionLost(token.Error()) // expected: external MQTT client has already been disconnected
 			return
 		}
 		ERROR.Printf("error while disconnecting client: %v", token.Error())
 	}
 
-	if client.externalMqttClient { // do not disconnect when external MQTT client, the connection should be managed only externally
+	if client.externalMQTTClient { // do not disconnect when external MQTT client, the connection should be managed only externally
 		go client.notifyClientConnectionLost(nil)
 	} else {
 		client.pahoClient.Disconnect(uint(client.cfg.disconnectTimeout.Milliseconds()))

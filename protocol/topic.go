@@ -80,15 +80,15 @@ var regexFiveElementTopic = regexp.MustCompile("^([^/]+)/([^/]+)/([^/]+)/([^/]+)
 var regexSixElementTopic = regexp.MustCompile("^([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)$")
 
 // Topic represents the Ditto protocol's Topic entity. It's represented in the form of:
-// <namespace>/<entityID>/<group>/<channel>/<criterion>/<action>.
+// <namespace>/<entity-name>/<group>/<channel>/<criterion>/<action>.
 // Each of the components is configurable based on the Ditto's specification for the specific group and/or channel/criterion/etc.
 type Topic struct {
-	Namespace string
-	EntityID  string
-	Group     TopicGroup
-	Channel   TopicChannel
-	Criterion TopicCriterion
-	Action    TopicAction
+	Namespace  string
+	EntityName string
+	Group      TopicGroup
+	Channel    TopicChannel
+	Criterion  TopicCriterion
+	Action     TopicAction
 }
 
 // String provides the string representation of a Topic entity.
@@ -96,11 +96,11 @@ func (topic *Topic) String() string {
 	switch topic.Group {
 	case GroupThings:
 		if len(topic.Action) == 0 {
-			return fmt.Sprintf(topicFormatThingsNoAction, topic.Namespace, topic.EntityID, topic.Group, topic.Channel, topic.Criterion)
+			return fmt.Sprintf(topicFormatThingsNoAction, topic.Namespace, topic.EntityName, topic.Group, topic.Channel, topic.Criterion)
 		}
-		return fmt.Sprintf(topicFormatThings, topic.Namespace, topic.EntityID, topic.Group, topic.Channel, topic.Criterion, topic.Action)
+		return fmt.Sprintf(topicFormatThings, topic.Namespace, topic.EntityName, topic.Group, topic.Channel, topic.Criterion, topic.Action)
 	case GroupPolicies:
-		return fmt.Sprintf(topicFormatPolicies, topic.Namespace, topic.EntityID, topic.Group, topic.Criterion, topic.Action)
+		return fmt.Sprintf(topicFormatPolicies, topic.Namespace, topic.EntityName, topic.Group, topic.Criterion, topic.Action)
 	default:
 		return ""
 	}
@@ -122,7 +122,7 @@ func (topic *Topic) UnmarshalJSON(data []byte) error {
 	index := 0
 	topic.Namespace = elements[index]
 	index++
-	topic.EntityID = elements[index]
+	topic.EntityName = elements[index]
 	index++
 	topic.Group = TopicGroup(elements[index])
 	index++
@@ -152,9 +152,9 @@ func (topic *Topic) WithNamespace(ns string) *Topic {
 	return topic
 }
 
-// WithEntityID configures the entity ID of the Topic.
-func (topic *Topic) WithEntityID(entityID string) *Topic {
-	topic.EntityID = entityID
+// WithEntityName configures the entity name of the Topic.
+func (topic *Topic) WithEntityName(entityName string) *Topic {
+	topic.EntityName = entityName
 	return topic
 }
 

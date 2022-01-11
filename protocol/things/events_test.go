@@ -22,11 +22,11 @@ import (
 func TestNewEvent(t *testing.T) {
 	want := &Event{
 		Topic: &protocol.Topic{
-			Namespace: testNamespaceID.Namespace,
-			EntityID:  testNamespaceID.Name,
-			Group:     protocol.GroupThings,
-			Channel:   protocol.ChannelTwin,
-			Criterion: protocol.CriterionEvents,
+			Namespace:  testNamespaceID.Namespace,
+			EntityName: testNamespaceID.Name,
+			Group:      protocol.GroupThings,
+			Channel:    protocol.ChannelTwin,
+			Criterion:  protocol.CriterionEvents,
 		},
 		Path: pathThing,
 	}

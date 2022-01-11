@@ -37,7 +37,7 @@ func (client *Client) honoMessageHandler(mqttClient MQTT.Client, message MQTT.Me
 		ERROR.Printf("error getting Ditto message: %v", err)
 		return
 	}
-	requestID := extractHonoRequestId(message.Topic())
+	requestID := extractHonoRequestID(message.Topic())
 	if requestID == "" {
 		DEBUG.Printf("no request ID is available in the received message with topic: %s", message.Topic())
 	} else {

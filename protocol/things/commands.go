@@ -55,7 +55,7 @@ func NewCommand(thingID *model.NamespacedID) *Command {
 	return &Command{
 		Topic: (&protocol.Topic{}).
 			WithNamespace(thingID.Namespace).
-			WithEntityID(thingID.Name).
+			WithEntityName(thingID.Name).
 			WithGroup(protocol.GroupThings).
 			WithChannel(protocol.ChannelTwin).
 			WithCriterion(protocol.CriterionCommands),

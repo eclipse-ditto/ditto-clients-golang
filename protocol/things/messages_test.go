@@ -22,11 +22,11 @@ import (
 func TestNewMessage(t *testing.T) {
 	want := &Message{
 		Topic: &protocol.Topic{
-			Namespace: testNamespaceID.Namespace,
-			EntityID:  testNamespaceID.Name,
-			Group:     protocol.GroupThings,
-			Channel:   protocol.ChannelLive,
-			Criterion: protocol.CriterionMessages,
+			Namespace:  testNamespaceID.Namespace,
+			EntityName: testNamespaceID.Name,
+			Group:      protocol.GroupThings,
+			Channel:    protocol.ChannelLive,
+			Criterion:  protocol.CriterionMessages,
 		},
 		AddressedPartOfThing: "",
 	}

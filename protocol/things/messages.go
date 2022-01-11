@@ -43,7 +43,7 @@ func NewMessage(thingID *model.NamespacedID) *Message {
 	return &Message{
 		Topic: (&protocol.Topic{}).
 			WithNamespace(thingID.Namespace).
-			WithEntityID(thingID.Name).
+			WithEntityName(thingID.Name).
 			WithGroup(protocol.GroupThings).
 			WithChannel(protocol.ChannelLive).
 			WithCriterion(protocol.CriterionMessages),
