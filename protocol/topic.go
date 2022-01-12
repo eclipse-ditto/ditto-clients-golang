@@ -17,6 +17,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/eclipse/ditto-clients-golang/model"
 )
 
 // TopicCriterion is a representation of the defined by Ditto topic criterion options.
@@ -120,9 +122,14 @@ func (topic *Topic) UnmarshalJSON(data []byte) error {
 	}
 	elements := strings.Split(v, "/")
 	index := 0
-	topic.Namespace = elements[index]
+	ns := elements[index]
 	index++
-	topic.EntityName = elements[index]
+	name := elements[index]
+	if err := validateNamespacedID(ns, name); err != nil {
+		return err
+	}
+	topic.Namespace = ns
+	topic.EntityName = name
 	index++
 	topic.Group = TopicGroup(elements[index])
 	index++
@@ -141,6 +148,25 @@ func (topic *Topic) UnmarshalJSON(data []byte) error {
 		topic.Action = TopicAction(elements[index])
 	} else {
 		topic.Action = ""
+	}
+
+	return nil
+}
+
+func validateNamespacedID(ns, entityName string) error {
+	var nsID *model.NamespacedID
+	if ns == TopicPlaceholder {
+		if entityName == TopicPlaceholder {
+			return nil
+		}
+		nsID = model.NewNamespacedID("ns", entityName)
+
+	} else {
+		nsID = model.NewNamespacedID(ns, entityName)
+	}
+
+	if nsID == nil {
+		return errors.New("invalid topic namespaced ID, namespace: " + ns + ", entity name: " + entityName)
 	}
 
 	return nil

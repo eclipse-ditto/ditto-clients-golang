@@ -12,18 +12,18 @@
 package protocol
 
 import (
-	"reflect"
+	"errors"
 	"testing"
+
+	"github.com/eclipse/ditto-clients-golang/internal"
 )
 
 func TestTopicString(t *testing.T) {
-	tests := []struct {
-		name  string
+	tests := map[string]struct {
 		topic Topic
 		want  string
 	}{
-		{
-			name: "TestTopicString GroupThings",
+		"test_topic_string_group_things": {
 			topic: Topic{
 				Namespace:  "namespace",
 				EntityName: "entity_name",
@@ -35,8 +35,7 @@ func TestTopicString(t *testing.T) {
 			want: "namespace/entity_name/" + string(GroupThings) + "/" + string(ChannelTwin) + "/" +
 				string(CriterionMessages) + "/" + string(ActionSubscribe),
 		},
-		{
-			name: "TestTopicString GroupPolicies",
+		"test_topic_string_group_policies": {
 			topic: Topic{
 				Namespace:  "namespace",
 				EntityName: "entity_name",
@@ -48,8 +47,7 @@ func TestTopicString(t *testing.T) {
 			want: "namespace/entity_name/" + string(GroupPolicies) + "/" +
 				string(CriterionCommands) + "/" + string(ActionCreate),
 		},
-		{
-			name: "TestTopicString empty",
+		"test_topic_string_empty": {
 			topic: Topic{
 				Namespace:  "namespace",
 				EntityName: "entity_name",
@@ -59,14 +57,13 @@ func TestTopicString(t *testing.T) {
 				Action:     ActionCreate,
 			},
 			want: "",
-		}}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := tt.topic.String()
-			if got != tt.want {
-				t.Errorf("Topic.String() = %v, want %v", got, tt.want)
-			}
+		},
+	}
 
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.topic.String()
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }
@@ -85,86 +82,83 @@ func TestTopicMarshalJSON(t *testing.T) {
 		grp := "\"namespace/entity_name/" + string(GroupThings) +
 			"/" + string(ChannelTwin) + "/" + string(CriterionMessages) + "/" +
 			string(ActionSubscribe) + "\""
-		if err != nil {
-			t.Errorf("Topic.MarshalJSON() error = %v", err)
-		}
-		if !reflect.DeepEqual(grp, string(got)) {
-			t.Errorf("Topic.MarshalJSON() want = %v , got %v", grp, string(got))
-		}
+
+		internal.AssertNil(t, err)
+		internal.AssertEqual(t, grp, string(got))
 	})
 }
 
 func TestTopicUnmarshalJSON(t *testing.T) {
-
-	tests := []struct {
-		name                  string
+	tests := map[string]struct {
 		data                  string
 		wantErr               bool
 		onlyForUnmarshalError bool
 	}{
-		{
-			name: "TestTopicUnmarshalJSON GroupThings",
+		"test_topic_unmarshal_JSON_group_things": {
 			data: "namespace/entity_name/" +
-				string(GroupThings) + "/" + string(ChannelTwin) + "/" + string(CriterionMessages) + "/" +
+				string(GroupThings) + "/" +
+				string(ChannelTwin) + "/" +
+				string(CriterionMessages) + "/" +
 				string(ActionSubscribe),
 			wantErr:               false,
 			onlyForUnmarshalError: false,
 		},
-		{
-			name: "TestTopicUnmarshalJSON GroupPolicies",
+		"test_topic_unmarshal_JSON_group_policies": {
 			data: "namespace/entity_name/" +
-				string(GroupPolicies) + "/" + string(CriterionCommands) + "/" + string(ActionCreate),
+				string(GroupPolicies) + "/" +
+				string(CriterionCommands) + "/" +
+				string(ActionCreate),
 			wantErr:               false,
 			onlyForUnmarshalError: false,
 		},
-		{
-			name:                  "TestTopicUnmarshalJSON for insufficient elements",
+		"test_topic_unmarshal_JSON_insufficient_elements": {
 			data:                  "///",
 			wantErr:               true,
 			onlyForUnmarshalError: false,
 		},
-		{
-			name: "TestTopicUnmarshalJSON GroupThings for missing channel for things",
+		"test_topic_unmarshal_JSON_group_things_missing_channel_for_things": {
 			data: "namespace/entity_name/" +
-				string(GroupThings) + "/" /*+ string(ChannelTwin) + "/"*/ + string(CriterionMessages) + "/" +
+				string(GroupThings) + "/" /*+ string(ChannelTwin) + "/"*/ +
+				string(CriterionMessages) + "/" +
 				string(ActionSubscribe),
 			wantErr:               true,
 			onlyForUnmarshalError: false,
 		},
-		{
-			name: "TestTopicUnmarshalJSON GroupThings insufficient elements for things",
+		"test_topic_unmarshal_JSON_group_things_insufficient_elements_for_things": {
 			data: "namespace/entity_name/" +
-				string(GroupThings) + "/" + string(ChannelTwin) + "/" + string(CriterionMessages),
+				string(GroupThings) + "/" +
+				string(ChannelTwin) + "/" +
+				string(CriterionMessages),
 			wantErr:               true,
 			onlyForUnmarshalError: false,
 		},
-		{
-			name:                  "TestTopicUnmarshalJSON topic must be empty",
+		"test_topic_unmarshal_JSON_topic_must_empty": {
 			data:                  "/////",
 			wantErr:               true,
 			onlyForUnmarshalError: false,
 		},
-		{
-			name:                  "TestTopicUnmarshalJSON no data",
+		"test_topic_unmarshal_JSON_no_data": {
 			data:                  "",
 			wantErr:               true,
 			onlyForUnmarshalError: false,
 		},
-		{
-			name: "TestTopicUnmarshalJSON only for internal error",
+		"test_topic_unmarshal_JSON_only_for_internal_error": {
 			data: "namespace/entity_name/" +
-				string(GroupThings) + "/" + string(ChannelTwin) + "/" + string(CriterionMessages) + "/" +
+				string(GroupThings) + "/" +
+				string(ChannelTwin) + "/" +
+				string(CriterionMessages) + "/" +
 				string(ActionSubscribe),
 			wantErr:               true,
 			onlyForUnmarshalError: true,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
 			topic := Topic{}
 			defer func() {
 				if r := recover(); r != nil {
-					if tt.wantErr {
+					if testCase.wantErr {
 						t.Logf("Topic.UnmarshalJSON() %v", r)
 					} else {
 						t.Errorf("Topic.UnmarshalJSON() unexpected error %v", r)
@@ -172,13 +166,13 @@ func TestTopicUnmarshalJSON(t *testing.T) {
 				}
 			}()
 			var err error
-			if tt.onlyForUnmarshalError {
+			if testCase.onlyForUnmarshalError {
 				err = topic.UnmarshalJSON([]byte(nil))
 			} else {
-				err = topic.UnmarshalJSON([]byte("\"" + tt.data + "\""))
+				err = topic.UnmarshalJSON([]byte("\"" + testCase.data + "\""))
 			}
 			if err != nil {
-				if tt.wantErr {
+				if testCase.wantErr {
 					t.Logf("Topic.UnmarshalJSON() error = %v", err)
 					return
 				} else {
@@ -187,7 +181,7 @@ func TestTopicUnmarshalJSON(t *testing.T) {
 				}
 			}
 			if topic.String() == "" {
-				if tt.wantErr {
+				if testCase.wantErr {
 					t.Logf("Topic.UnmarshalJSON() topic is empty")
 					return
 				} else {
@@ -195,10 +189,73 @@ func TestTopicUnmarshalJSON(t *testing.T) {
 					return
 				}
 			}
-			if topic.String() != tt.data {
-				t.Errorf("Topic.UnmarshalJSON() want = %v, got %v", topic.String(), tt.data)
+			if topic.String() != testCase.data {
+				t.Errorf("Topic.UnmarshalJSON() want = %v, got %v", topic.String(), testCase.data)
 				return
 			}
+		})
+	}
+}
+
+func TestTopicNamespace(t *testing.T) {
+	var (
+		testValidNamespace    = "test.namespace"
+		testInvalidNamespace  = "test:namespace"
+		testValidEntityName   = "test.name"
+		testInvalidEntityName = "test§name"
+	)
+
+	tests := map[string]struct {
+		data       string
+		namespace  string
+		entityName string
+		wantErr    error
+	}{
+		"test_topic_unmarshal_JSON_valid_namespace_entity_name": {
+			data:       testValidNamespace + "/" + testValidEntityName + "/things/twin/retrieve",
+			namespace:  testValidNamespace,
+			entityName: testValidEntityName,
+			wantErr:    nil,
+		},
+		"test_topic_unmarshal_JSON_empty_namespace_valid_entity_name": {
+			data:       TopicPlaceholder + "/" + testValidEntityName + "/things/twin/retrieve",
+			namespace:  TopicPlaceholder,
+			entityName: testValidEntityName,
+			wantErr:    nil,
+		},
+		"test_topic_unmarshal_JSON_valid_namespace_empty_entity_name": {
+			data:       testValidNamespace + "/" + TopicPlaceholder + "/things/twin/retrieve",
+			namespace:  testValidNamespace,
+			entityName: TopicPlaceholder,
+			wantErr:    nil,
+		},
+		"test_topic_unmarshal_JSON_empty_namespace_empty_entity_name": {
+			data:       TopicPlaceholder + "/" + TopicPlaceholder + "/things/twin/retrieve",
+			namespace:  TopicPlaceholder,
+			entityName: TopicPlaceholder,
+			wantErr:    nil,
+		},
+		"test_topic_unmarshal_JSON_invalid_namespace": {
+			data:       testInvalidNamespace + "/" + testValidEntityName + "/things/twin/retrieve",
+			namespace:  "",
+			entityName: "",
+			wantErr:    errors.New("invalid topic namespaced ID, namespace: " + testInvalidNamespace + ", entity name: " + testValidEntityName),
+		},
+		"test_topic_unmarshal_JSON_invalid_entity_name": {
+			data:       testValidNamespace + "/" + testInvalidEntityName + "/things/twin/retrieve",
+			namespace:  "",
+			entityName: "",
+			wantErr:    errors.New("invalid topic namespaced ID, namespace: " + testValidNamespace + ", entity name: " + testInvalidEntityName),
+		},
+	}
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			topic := Topic{}
+			err := topic.UnmarshalJSON([]byte("\"" + testCase.data + "\""))
+			internal.AssertError(t, testCase.wantErr, err)
+			internal.AssertEqual(t, testCase.namespace, topic.Namespace)
+			internal.AssertEqual(t, testCase.entityName, topic.EntityName)
 		})
 	}
 }
@@ -207,9 +264,8 @@ func TestTopicWithNamespace(t *testing.T) {
 	t.Run("TestTopicWithNamespace", func(t *testing.T) {
 		arg := "namespace"
 		topic := Topic{}
-		if got := topic.WithNamespace(arg); !reflect.DeepEqual(got.Namespace, arg) {
-			t.Errorf("Topic.WithNamespace() = %v, want %v", got.Namespace, arg)
-		}
+		got := topic.WithNamespace(arg)
+		internal.AssertEqual(t, arg, got.Namespace)
 	})
 }
 
@@ -217,9 +273,8 @@ func TestTopicWithEntityName(t *testing.T) {
 	t.Run("TestTopicWithEntityName", func(t *testing.T) {
 		arg := "EntityName"
 		topic := Topic{}
-		if got := topic.WithEntityName(arg); !reflect.DeepEqual(got.EntityName, arg) {
-			t.Errorf("Topic.WithEntityName() = %v, want %v", got.EntityName, arg)
-		}
+		got := topic.WithEntityName(arg)
+		internal.AssertEqual(t, arg, got.EntityName)
 	})
 }
 
@@ -227,9 +282,8 @@ func TestTopicWithGroup(t *testing.T) {
 	t.Run("TestTopicWithGroup", func(t *testing.T) {
 		arg := GroupThings
 		topic := Topic{}
-		if got := topic.WithGroup(arg); !reflect.DeepEqual(got.Group, arg) {
-			t.Errorf("Topic.WithGroup() = %v, want %v", got.Group, arg)
-		}
+		got := topic.WithGroup(arg)
+		internal.AssertEqual(t, arg, got.Group)
 	})
 }
 
@@ -237,9 +291,8 @@ func TestTopicWithChannel(t *testing.T) {
 	t.Run("TestTopicWithChannel", func(t *testing.T) {
 		arg := ChannelTwin
 		topic := Topic{}
-		if got := topic.WithChannel(arg); !reflect.DeepEqual(got.Channel, arg) {
-			t.Errorf("Topic.WithChannel() = %v, want %v", got.Channel, arg)
-		}
+		got := topic.WithChannel(arg)
+		internal.AssertEqual(t, arg, got.Channel)
 	})
 }
 
@@ -247,9 +300,8 @@ func TestTopicWithCriterion(t *testing.T) {
 	t.Run("TestTopicWithCriterion", func(t *testing.T) {
 		arg := CriterionMessages
 		topic := Topic{}
-		if got := topic.WithCriterion(arg); !reflect.DeepEqual(got.Criterion, arg) {
-			t.Errorf("Topic.WithCriterion() = %v, want %v", got.Criterion, arg)
-		}
+		got := topic.WithCriterion(arg)
+		internal.AssertEqual(t, arg, got.Criterion)
 	})
 }
 
@@ -257,8 +309,7 @@ func TestTopicWithAction(t *testing.T) {
 	t.Run("TestTopicWithAction", func(t *testing.T) {
 		arg := ActionSubscribe
 		topic := Topic{}
-		if got := topic.WithAction(arg); !reflect.DeepEqual(got.Action, arg) {
-			t.Errorf("Topic.WithAction() = %v, want %v", got.Action, arg)
-		}
+		got := topic.WithAction(arg)
+		internal.AssertEqual(t, arg, got.Action)
 	})
 }

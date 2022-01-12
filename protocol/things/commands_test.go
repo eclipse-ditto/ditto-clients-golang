@@ -13,9 +13,9 @@ package things
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
+	"github.com/eclipse/ditto-clients-golang/internal"
 	"github.com/eclipse/ditto-clients-golang/model"
 	"github.com/eclipse/ditto-clients-golang/protocol"
 )
@@ -43,9 +43,8 @@ func TestNewCommand(t *testing.T) {
 		Path: pathThing,
 	}
 
-	if got := NewCommand(testNamespaceID); !reflect.DeepEqual(got, want) {
-		t.Errorf("NewCommand() = %v want: %v", got, want)
-	}
+	got := NewCommand(testNamespaceID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestCreate(t *testing.T) {
@@ -60,9 +59,8 @@ func TestCreate(t *testing.T) {
 		Payload: &model.Thing{},
 	}
 
-	if got := testCommand.Create(&model.Thing{}); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.Create() = %v want: %v", got, want)
-	}
+	got := testCommand.Create(&model.Thing{})
+	internal.AssertEqual(t, want, got)
 }
 
 func TestModify(t *testing.T) {
@@ -77,9 +75,8 @@ func TestModify(t *testing.T) {
 		Payload: &model.Feature{},
 	}
 
-	if got := testCommand.Modify(&model.Feature{}); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.Modify() = %v want: %v", got, want)
-	}
+	got := testCommand.Modify(&model.Feature{})
+	internal.AssertEqual(t, want, got)
 }
 
 func TestMerge(t *testing.T) {
@@ -94,9 +91,8 @@ func TestMerge(t *testing.T) {
 		Payload: &model.Feature{},
 	}
 
-	if got := testCommand.Merge(&model.Feature{}); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.Merge() = %v want: %v", got, want)
-	}
+	got := testCommand.Merge(&model.Feature{})
+	internal.AssertEqual(t, want, got)
 }
 
 func TestRetrieve(t *testing.T) {
@@ -167,9 +163,8 @@ func TestRetrieve(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			if got := testCase.testCommand.Retrieve(testCase.arg...); !reflect.DeepEqual(got, testCase.want) {
-				t.Errorf("Command.Retrieve() = %v want: %v", got, testCase.want)
-			}
+			got := testCase.testCommand.Retrieve(testCase.arg...)
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }
@@ -185,9 +180,8 @@ func TestDelete(t *testing.T) {
 		},
 	}
 
-	if got := testCommand.Delete(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.Delete() = %v want: %v", got, want)
-	}
+	got := testCommand.Delete()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestPolicyID(t *testing.T) {
@@ -197,9 +191,8 @@ func TestPolicyID(t *testing.T) {
 		Path: pathThingPolicyID,
 	}
 
-	if got := testEmptyCommand.PolicyID(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.PolicyID() = %v want: %v", got, want)
-	}
+	got := testEmptyCommand.PolicyID()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestDefinition(t *testing.T) {
@@ -209,9 +202,8 @@ func TestDefinition(t *testing.T) {
 		Path: pathThingDefinition,
 	}
 
-	if got := testEmptyCommand.Definition(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.Definition() = %v want: %v", got, want)
-	}
+	got := testEmptyCommand.Definition()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestAttributes(t *testing.T) {
@@ -221,9 +213,8 @@ func TestAttributes(t *testing.T) {
 		Path: pathThingAttributes,
 	}
 
-	if got := testEmptyCommand.Attributes(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.Attributes() = %v want: %v", got, want)
-	}
+	got := testEmptyCommand.Attributes()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestAttribute(t *testing.T) {
@@ -233,9 +224,8 @@ func TestAttribute(t *testing.T) {
 		Path: fmt.Sprintf(pathThingAttributeFormat, testAttributeID),
 	}
 
-	if got := testEmptyCommand.Attribute(testAttributeID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.Attribute() = %v want: %v", got, want)
-	}
+	got := testEmptyCommand.Attribute(testAttributeID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestFeatures(t *testing.T) {
@@ -245,9 +235,8 @@ func TestFeatures(t *testing.T) {
 		Path: pathThingFeatures,
 	}
 
-	if got := testEmptyCommand.Features(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.Features() = %v want: %v", got, want)
-	}
+	got := testEmptyCommand.Features()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestFeature(t *testing.T) {
@@ -257,9 +246,8 @@ func TestFeature(t *testing.T) {
 		Path: fmt.Sprintf(pathThingFeatureFormat, testFeatureID),
 	}
 
-	if got := testEmptyCommand.Feature(testFeatureID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.Feature() = %v want: %v", got, want)
-	}
+	got := testEmptyCommand.Feature(testFeatureID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestFeatureDefinition(t *testing.T) {
@@ -269,9 +257,8 @@ func TestFeatureDefinition(t *testing.T) {
 		Path: fmt.Sprintf(pathThingFeatureDefinitionFormat, testFeatureID),
 	}
 
-	if got := testEmptyCommand.FeatureDefinition(testFeatureID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.FeatureDefinition() = %v want: %v", got, want)
-	}
+	got := testEmptyCommand.FeatureDefinition(testFeatureID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestFeatureProperties(t *testing.T) {
@@ -281,9 +268,8 @@ func TestFeatureProperties(t *testing.T) {
 		Path: fmt.Sprintf(pathThingFeaturePropertiesFormat, testFeatureID),
 	}
 
-	if got := testEmptyCommand.FeatureProperties(testFeatureID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.FeatureProperties() = %v want: %v", got, want)
-	}
+	got := testEmptyCommand.FeatureProperties(testFeatureID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestFeatureProperty(t *testing.T) {
@@ -293,9 +279,8 @@ func TestFeatureProperty(t *testing.T) {
 		Path: fmt.Sprintf(pathThingFeaturePropertyFormat, testFeatureID, testPropertyID),
 	}
 
-	if got := testEmptyCommand.FeatureProperty(testFeatureID, testPropertyID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.FeatureProperty() = %v want: %v", got, want)
-	}
+	got := testEmptyCommand.FeatureProperty(testFeatureID, testPropertyID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestFeatureDesiredProperties(t *testing.T) {
@@ -305,9 +290,8 @@ func TestFeatureDesiredProperties(t *testing.T) {
 		Path: fmt.Sprintf(pathThingFeatureDesiredPropertiesFormat, testFeatureID),
 	}
 
-	if got := testEmptyCommand.FeatureDesiredProperties(testFeatureID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.FeatureDesiredProperties() = %v want: %v", got, want)
-	}
+	got := testEmptyCommand.FeatureDesiredProperties(testFeatureID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestFeatureDesiredProperty(t *testing.T) {
@@ -317,9 +301,8 @@ func TestFeatureDesiredProperty(t *testing.T) {
 		Path: fmt.Sprintf(pathThingFeatureDesiredPropertyFormat, testFeatureID, testPropertyPath),
 	}
 
-	if got := testEmptyCommand.FeatureDesiredProperty(testFeatureID, testPropertyPath); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.FeatureDesiredProperty() = %v want: %v", got, want)
-	}
+	got := testEmptyCommand.FeatureDesiredProperty(testFeatureID, testPropertyPath)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestLive(t *testing.T) {
@@ -333,9 +316,8 @@ func TestLive(t *testing.T) {
 		},
 	}
 
-	if got := testCommand.Live(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.Live() = %v want: %v", got, want)
-	}
+	got := testCommand.Live()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestTwin(t *testing.T) {
@@ -349,9 +331,8 @@ func TestTwin(t *testing.T) {
 		},
 	}
 
-	if got := testCommand.Twin(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Command.Twin() = %v want: %v", got, want)
-	}
+	got := testCommand.Twin()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEnvelope(t *testing.T) {
@@ -388,9 +369,8 @@ func TestEnvelope(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			if got := cmd.Envelope(testCase.arg...); !reflect.DeepEqual(got, testCase.want) {
-				t.Errorf("Command.Envelope() = %v want: %v", got, testCase.want)
-			}
+			got := cmd.Envelope(testCase.arg...)
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }

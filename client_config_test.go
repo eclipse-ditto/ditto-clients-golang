@@ -16,6 +16,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/eclipse/ditto-clients-golang/internal"
 )
 
 func TestNewConfiguration(t *testing.T) {
@@ -24,9 +26,8 @@ func TestNewConfiguration(t *testing.T) {
 		disconnectTimeout: defaultDisconnectTimeout,
 	}
 
-	if got := NewConfiguration(); !reflect.DeepEqual(got, want) {
-		t.Errorf("NewConfiguration() = %v, want %v", got, want)
-	}
+	got := NewConfiguration()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestBroker(t *testing.T) {
@@ -48,9 +49,8 @@ func TestBroker(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			if got := testCase.testConfiguration.Broker(); got != testCase.want {
-				t.Errorf("Broker() = %v, want %v", got, testCase.want)
-			}
+			got := testCase.testConfiguration.Broker()
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }
@@ -78,9 +78,8 @@ func TestKeepAlive(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			if got := testCase.testConfiguration.KeepAlive(); got != testCase.want {
-				t.Errorf("KeepAlive() = %v, want %v", got, testCase.want)
-			}
+			got := testCase.testConfiguration.KeepAlive()
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }
@@ -108,9 +107,8 @@ func TestDisconnectTimeout(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			if got := testCase.testConfiguration.DisconnectTimeout(); got != testCase.want {
-				t.Errorf("DisconnectTimeout() = %v, want %v", got, testCase.want)
-			}
+			got := testCase.testConfiguration.DisconnectTimeout()
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }
@@ -167,12 +165,7 @@ func TestCredentials(t *testing.T) {
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			got := testCase.testConfiguration.Credentials()
-			if got != testCase.want {
-				t.Error("Credentials objects are not the same")
-			}
-			if !reflect.DeepEqual(got, testCase.want) {
-				t.Errorf("Credentials() = %v, want %v", got, testCase.want)
-			}
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }
@@ -266,12 +259,7 @@ func TestTLSConfig(t *testing.T) {
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			got := testCase.testConfiguration.TLSConfig()
-			if got != testCase.want {
-				t.Error("tls.Config objects are not the same")
-			}
-			if !reflect.DeepEqual(got, testCase.want) {
-				t.Errorf("TLSConfig() = %v, want %v", got, testCase.want)
-			}
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }
@@ -285,9 +273,8 @@ func TestWithBroker(t *testing.T) {
 		broker: arg,
 	}
 
-	if got := testConfiguration.WithBroker(arg); !reflect.DeepEqual(got, want) {
-		t.Errorf("WithBroker() = %v, want %v", got, want)
-	}
+	got := testConfiguration.WithBroker(arg)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestWithKeepAlive(t *testing.T) {
@@ -299,9 +286,8 @@ func TestWithKeepAlive(t *testing.T) {
 		keepAlive: arg,
 	}
 
-	if got := testConfiguration.WithKeepAlive(arg); !reflect.DeepEqual(got, want) {
-		t.Errorf("WithKeepAlive() = %v, want %v", got, want)
-	}
+	got := testConfiguration.WithKeepAlive(arg)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestWithDisconnectTimeout(t *testing.T) {
@@ -313,9 +299,8 @@ func TestWithDisconnectTimeout(t *testing.T) {
 		disconnectTimeout: arg,
 	}
 
-	if got := testConfiguration.WithDisconnectTimeout(arg); !reflect.DeepEqual(got, want) {
-		t.Errorf("WithDisconnectTimeout() = %v, want %v", got, want)
-	}
+	got := testConfiguration.WithDisconnectTimeout(arg)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestWitWithCredentials(t *testing.T) {
@@ -330,9 +315,8 @@ func TestWitWithCredentials(t *testing.T) {
 		credentials: arg,
 	}
 
-	if got := testConfiguration.WithCredentials(arg); !reflect.DeepEqual(got, want) {
-		t.Errorf("WithCredentials() = %v, want %v", got, want)
-	}
+	got := testConfiguration.WithCredentials(arg)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestWithConnectHandler(t *testing.T) {
@@ -372,7 +356,6 @@ func TestWithTLSConfig(t *testing.T) {
 		tlsConfig: arg,
 	}
 
-	if got := testConfiguration.WithTLSConfig(arg); !reflect.DeepEqual(got, want) {
-		t.Errorf("WithTLSConfig() = %v, want %v", got, want)
-	}
+	got := testConfiguration.WithTLSConfig(arg)
+	internal.AssertEqual(t, want, got)
 }

@@ -12,9 +12,9 @@ package things
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
+	"github.com/eclipse/ditto-clients-golang/internal"
 	"github.com/eclipse/ditto-clients-golang/model"
 	"github.com/eclipse/ditto-clients-golang/protocol"
 )
@@ -31,9 +31,8 @@ func TestNewMessage(t *testing.T) {
 		AddressedPartOfThing: "",
 	}
 
-	if got := NewMessage(testNamespaceID); !reflect.DeepEqual(got, want) {
-		t.Errorf("NewMessage() = %v want: %v", got, want)
-	}
+	got := NewMessage(testNamespaceID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestInbox(t *testing.T) {
@@ -51,9 +50,8 @@ func TestInbox(t *testing.T) {
 		Mailbox: inbox,
 	}
 
-	if got := testMessage.Inbox(arg); !reflect.DeepEqual(got, want) {
-		t.Errorf("Message.Inbox() = %v want: %v", got, want)
-	}
+	got := testMessage.Inbox(arg)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestOutbox(t *testing.T) {
@@ -71,9 +69,8 @@ func TestOutbox(t *testing.T) {
 		Mailbox: outbox,
 	}
 
-	if got := testMessage.Outbox(arg); !reflect.DeepEqual(got, want) {
-		t.Errorf("Message.Outbox() = %v want: %v", got, want)
-	}
+	got := testMessage.Outbox(arg)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestWithPayload(t *testing.T) {
@@ -85,9 +82,8 @@ func TestWithPayload(t *testing.T) {
 		Payload: arg,
 	}
 
-	if got := testMessage.WithPayload(arg); !reflect.DeepEqual(got, want) {
-		t.Errorf("Message.WithPayload() = %v want: %v", got, want)
-	}
+	got := testMessage.WithPayload(arg)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestMessageFeature(t *testing.T) {
@@ -97,9 +93,8 @@ func TestMessageFeature(t *testing.T) {
 		AddressedPartOfThing: fmt.Sprintf(pathThingFeatureFormat, testFeatureID),
 	}
 
-	if got := testMessage.Feature(testFeatureID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Message.Feature() = %v want: %v", got, want)
-	}
+	got := testMessage.Feature(testFeatureID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestMessageEnvelope(t *testing.T) {
@@ -136,9 +131,8 @@ func TestMessageEnvelope(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			if got := msg.Envelope(testCase.arg...); !reflect.DeepEqual(got, testCase.want) {
-				t.Errorf("Event.Envelope() = %v want: %v", got, testCase.want)
-			}
+			got := msg.Envelope(testCase.arg...)
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }
