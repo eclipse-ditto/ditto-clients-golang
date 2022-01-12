@@ -12,64 +12,60 @@
 package model
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/eclipse/ditto-clients-golang/internal"
 )
 
 func TestFeatureWithDefinitionFrom(t *testing.T) {
-	tests := []struct {
-		name        string
+	tests := map[string]struct {
 		arg1        string
 		arg2        string
 		testFeature Feature
 		want        []*DefinitionID
 	}{
-		{
-			name:        "TestFeatureWithDefinitionFromWithoutExistingDefinitionID",
-			arg1:        "test.namespace:testId:1.0.0",
-			arg2:        "test.namespace:testId:1.0.1",
+		"test_feature_with_definition_from_without_existing_definition_ID": {
+			arg1:        "test.namespace:test-name:1.0.0",
+			arg2:        "test.namespace:test-name:1.0.1",
 			testFeature: Feature{},
 			want: []*DefinitionID{
-				NewDefinitionIDFrom("test.namespace:testId:1.0.0"),
-				NewDefinitionIDFrom("test.namespace:testId:1.0.1"),
+				NewDefinitionIDFrom("test.namespace:test-name:1.0.0"),
+				NewDefinitionIDFrom("test.namespace:test-name:1.0.1"),
 			},
 		},
-		{
-			name: "TestFeatureWithDefinitionFromWithExistingDefinitionID",
-			arg1: "test.namespace:testId:1.0.0",
-			arg2: "test.namespace:testId:1.0.1",
+		"test_feature_with_definition_from_with_existing_definition_ID": {
+			arg1: "test.namespace:test-name:1.0.0",
+			arg2: "test.namespace:test-name:1.0.1",
 			testFeature: Feature{
 				Definition: []*DefinitionID{
-					NewDefinitionIDFrom("test.namespace:testId:0.0.0"),
+					NewDefinitionIDFrom("test.namespace:test-name:0.0.0"),
 				},
 			},
 			want: []*DefinitionID{
-				NewDefinitionIDFrom("test.namespace:testId:1.0.0"),
-				NewDefinitionIDFrom("test.namespace:testId:1.0.1"),
+				NewDefinitionIDFrom("test.namespace:test-name:1.0.0"),
+				NewDefinitionIDFrom("test.namespace:test-name:1.0.1"),
 			},
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.testFeature.WithDefinitionFrom(tt.arg1, tt.arg2); !reflect.DeepEqual(got.Definition, tt.want) {
-				t.Errorf("Feature.WithDefinitionFrom() = %v, want %v", got.Definition, tt.want)
-			}
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testFeature.WithDefinitionFrom(testCase.arg1, testCase.arg2)
+			internal.AssertEqual(t, testCase.want, got.Definition)
 		})
 	}
 }
 
 func TestFeatureWithDefinition(t *testing.T) {
-	arg1 := NewDefinitionIDFrom("test.namespace:testId:1.0.0")
-	arg2 := NewDefinitionIDFrom("test.namespace:testId:1.0.0")
+	arg1 := NewDefinitionIDFrom("test.namespace:test-name:1.0.0")
+	arg2 := NewDefinitionIDFrom("test.namespace:test-name:1.0.0")
 
 	testDefinitions := []*DefinitionID{arg1, arg2}
 
 	testFeature := &Feature{}
 
-	if got := testFeature.WithDefinition(arg1, arg2); !reflect.DeepEqual(got.Definition, testDefinitions) {
-		t.Errorf("Feature.WithDefinition() = %v, want %v", got.Definition, testDefinitions)
-	}
+	got := testFeature.WithDefinition(arg1, arg2)
+	internal.AssertEqual(t, testDefinitions, got.Definition)
 }
 
 func TestFeatureWithProperties(t *testing.T) {
@@ -79,22 +75,18 @@ func TestFeatureWithProperties(t *testing.T) {
 	}
 
 	testFeature := &Feature{}
-
-	if got := testFeature.WithProperties(arg); !reflect.DeepEqual(got.Properties, arg) {
-		t.Errorf("Feature.WithProperties() = %v, want %v", got.Properties, arg)
-	}
+	got := testFeature.WithProperties(arg)
+	internal.AssertEqual(t, arg, got.Properties)
 }
 
 func TestFeatureWithProperty(t *testing.T) {
-	tests := []struct {
-		name        string
+	tests := map[string]struct {
 		arg1        string
 		arg2        string
 		testFeature Feature
 		want        map[string]interface{}
 	}{
-		{
-			name:        "TestFeatureWithPropertyWithoutExistingProperty",
+		"test_feature_with_property_without_existing_property": {
 			arg1:        "test.key",
 			arg2:        "test.value",
 			testFeature: Feature{},
@@ -102,8 +94,7 @@ func TestFeatureWithProperty(t *testing.T) {
 				"test.key": "test.value",
 			},
 		},
-		{
-			name: "TestFeatureWithPropertyWithExistingProperty",
+		"test_feature_with_property_wWith_existing_property": {
 			arg1: "test.key1",
 			arg2: "test.value1",
 			testFeature: Feature{
@@ -118,11 +109,10 @@ func TestFeatureWithProperty(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.testFeature.WithProperty(tt.arg1, tt.arg2); !reflect.DeepEqual(got.Properties, tt.want) {
-				t.Errorf("Feature.WithProperty() = %v, want %v", got.Properties, tt.want)
-			}
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testFeature.WithProperty(testCase.arg1, testCase.arg2)
+			internal.AssertEqual(t, testCase.want, got.Properties)
 		})
 	}
 }
@@ -135,21 +125,18 @@ func TestFeatureWithDesiredProperties(t *testing.T) {
 
 	testFeature := &Feature{}
 
-	if got := testFeature.WithDesiredProperties(arg); !reflect.DeepEqual(got.DesiredProperties, arg) {
-		t.Errorf("Feature.WithDesiredProperties() = %v, want %v", got.DesiredProperties, arg)
-	}
+	got := testFeature.WithDesiredProperties(arg)
+	internal.AssertEqual(t, arg, got.DesiredProperties)
 }
 
 func TestFeatureWithDesiredProperty(t *testing.T) {
-	tests := []struct {
-		name        string
+	tests := map[string]struct {
 		arg1        string
 		arg2        string
 		testFeature Feature
 		want        map[string]interface{}
 	}{
-		{
-			name:        "TestFeatureWithDesiredPropertyWithoutExistingDesiredProperty",
+		"test_feature_with_desired_property_without_existing_desired_property": {
 			arg1:        "test.key",
 			arg2:        "test.value",
 			testFeature: Feature{},
@@ -157,8 +144,7 @@ func TestFeatureWithDesiredProperty(t *testing.T) {
 				"test.key": "test.value",
 			},
 		},
-		{
-			name: "TestFeatureWithDesiredPropertyExistingPropertyDesiredProperty",
+		"test_feature_with_desired_property_existing_property_desired_property": {
 			arg1: "test.key1",
 			arg2: "test.value1",
 			testFeature: Feature{
@@ -173,11 +159,10 @@ func TestFeatureWithDesiredProperty(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.testFeature.WithDesiredProperty(tt.arg1, tt.arg2); !reflect.DeepEqual(got.DesiredProperties, tt.want) {
-				t.Errorf("Feature.WithDesiredProperty() = %v, want %v", got.DesiredProperties, tt.want)
-			}
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testFeature.WithDesiredProperty(testCase.arg1, testCase.arg2)
+			internal.AssertEqual(t, testCase.want, got.DesiredProperties)
 		})
 	}
 }

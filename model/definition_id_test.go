@@ -25,19 +25,19 @@ func TestDefinitionIDNewDefinitionIDFrom(t *testing.T) {
 		want *DefinitionID
 	}{
 		"test_new_definition_id_from_valid": {
-			arg: "test.namespace_42:testId:1.0.0-qualifier",
+			arg: "test.namespace_42:test-name:1.0.0-qualifier",
 			want: &DefinitionID{
 				Namespace: "test.namespace_42",
-				Name:      "testId",
+				Name:      "test-name",
 				Version:   "1.0.0-qualifier",
 			},
 		},
 		"test_new_definition_id_from_without_namespace": {
-			arg:  ":testId:1.0.0",
+			arg:  ":test-name:1.0.0",
 			want: nil,
 		},
 		"test_new_definition_id_from_without_name": {
-			arg:  "testId:1.0.0",
+			arg:  "test-name:1.0.0",
 			want: nil,
 		},
 		"test_new_definition_id_from_without_version": {
@@ -45,11 +45,11 @@ func TestDefinitionIDNewDefinitionIDFrom(t *testing.T) {
 			want: nil,
 		},
 		"test_new_definition_id_from_with_invalid_colon": {
-			arg:  "test.namespace:testId:1.0.0:",
+			arg:  "test.namespace:test-name:1.0.0:",
 			want: nil,
 		},
 		"test_new_definition_id_from_with_invalid_character": {
-			arg:  "test.name*space:testId:1.0.0",
+			arg:  "test.name*space:test-name:1.0.0",
 			want: nil,
 		},
 		"test_new_definition_id_from_empty": {
@@ -57,18 +57,18 @@ func TestDefinitionIDNewDefinitionIDFrom(t *testing.T) {
 			want: nil,
 		},
 		"test_new_definition_id_from_namespace_with_dash": {
-			arg: "test-namespace:testId:1.0.0-qualifier",
+			arg: "test-namespace:test-name:1.0.0-qualifier",
 			want: &DefinitionID{
 				Namespace: "test-namespace",
-				Name:      "testId",
+				Name:      "test-name",
 				Version:   "1.0.0-qualifier",
 			},
 		},
 		"test_new_definition_id_from_namespace_with_dash_dot": {
-			arg: "test.namespace-id:testId:1.0.0-qualifier",
+			arg: "test.namespace-dash-dot:test-name:1.0.0-qualifier",
 			want: &DefinitionID{
-				Namespace: "test.namespace-id",
-				Name:      "testId",
+				Namespace: "test.namespace-dash-dot",
+				Name:      "test-name",
 				Version:   "1.0.0-qualifier",
 			},
 		},
@@ -77,7 +77,7 @@ func TestDefinitionIDNewDefinitionIDFrom(t *testing.T) {
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			got := NewDefinitionIDFrom(testCase.arg)
-			internal.AssertEqual(t, got, testCase.want)
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }
@@ -88,30 +88,30 @@ func TestDefinitionIDNewDefinitionID(t *testing.T) {
 		want *DefinitionID
 	}{
 		"test_new_definition_id_valid": {
-			args: []string{"test.namespace_42", "testId", "1.0.0-qualifier"},
+			args: []string{"test.namespace_42", "test-name", "1.0.0-qualifier"},
 			want: &DefinitionID{
 				Namespace: "test.namespace_42",
-				Name:      "testId",
+				Name:      "test-name",
 				Version:   "1.0.0-qualifier",
 			},
 		},
 		"test_new_definition_id_invalid": {
-			args: []string{"test/namespace", "testId", "1.0.0"},
+			args: []string{"test/namespace", "test-name", "1.0.0"},
 			want: nil,
 		},
 		"test_new_definition_id_namespace_dash": {
-			args: []string{"test-namespace", "testId", "1.0.0-qualifier"},
+			args: []string{"test-namespace", "test-name", "1.0.0-qualifier"},
 			want: &DefinitionID{
 				Namespace: "test-namespace",
-				Name:      "testId",
+				Name:      "test-name",
 				Version:   "1.0.0-qualifier",
 			},
 		},
 		"test_new_definition_id_namespace_dash_dot": {
-			args: []string{"test.namespace-id", "testId", "1.0.0-qualifier"},
+			args: []string{"test.namespace-dash-dot", "test-name", "1.0.0-qualifier"},
 			want: &DefinitionID{
-				Namespace: "test.namespace-id",
-				Name:      "testId",
+				Namespace: "test.namespace-dash-dot",
+				Name:      "test-name",
 				Version:   "1.0.0-qualifier",
 			},
 		},
@@ -120,7 +120,7 @@ func TestDefinitionIDNewDefinitionID(t *testing.T) {
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			got := NewDefinitionID(testCase.args[0], testCase.args[1], testCase.args[2])
-			internal.AssertEqual(t, got, testCase.want)
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }
@@ -128,14 +128,14 @@ func TestDefinitionIDNewDefinitionID(t *testing.T) {
 func TestDefinitionIDString(t *testing.T) {
 	testDefinitionID := &DefinitionID{
 		Namespace: "test.namespace",
-		Name:      "testId",
+		Name:      "test-name",
 		Version:   "1.0.0",
 	}
 
-	want := "test.namespace:testId:1.0.0"
+	want := "test.namespace:test-name:1.0.0"
 
 	got := testDefinitionID.String()
-	internal.AssertEqual(t, got, want)
+	internal.AssertEqual(t, want, got)
 
 	if got := testDefinitionID.String(); reflect.TypeOf(got) != reflect.TypeOf(want) {
 		t.Errorf("DefinitionID.String() = %v, want %v", reflect.TypeOf(got), reflect.TypeOf(want))
@@ -145,14 +145,14 @@ func TestDefinitionIDString(t *testing.T) {
 func TestDefinitionIDMarshalJSON(t *testing.T) {
 	testDefinitionID := &DefinitionID{
 		Namespace: "test.namespace",
-		Name:      "testId",
+		Name:      "test-name",
 		Version:   "1.0.0",
 	}
 
-	want := []byte("\"test.namespace:testId:1.0.0\"")
+	want := []byte("\"test.namespace:test-name:1.0.0\"")
 
 	got, _ := testDefinitionID.MarshalJSON()
-	internal.AssertEqual(t, got, want)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestDefinitionIDUnmarshalJSON(t *testing.T) {
@@ -162,32 +162,32 @@ func TestDefinitionIDUnmarshalJSON(t *testing.T) {
 		wantErr error
 	}{
 		"test_definition_id_unmarshal_json_valid": {
-			arg: []byte("\"test.namespace:testId:1.0.0\""),
+			arg: []byte("\"test.namespace:test-name:1.0.0\""),
 			want: &DefinitionID{
 				Namespace: "test.namespace",
-				Name:      "testId",
+				Name:      "test-name",
 				Version:   "1.0.0",
 			},
 			wantErr: nil,
 		},
 		"test_definition_id_unmarshal_json_invalid_namespace": {
-			arg:     []byte("\"test:namespace:testId:1.0.0\""),
-			wantErr: errors.New("invalid DefinitionID: test:namespace:testId:1.0.0"),
+			arg:     []byte("\"test:namespace:test-name:1.0.0\""),
+			wantErr: errors.New("invalid DefinitionID: test:namespace:test-name:1.0.0"),
 		},
 		"test_definition_id_unmarshal_json_invalid_name": {
 			arg:     []byte("\"test.namespace:1.0.0\""),
 			wantErr: errors.New("invalid DefinitionID: test.namespace:1.0.0"),
 		},
 		"test_definition_id_unmarshal_json_invalid_version": {
-			arg:     []byte("\"test.namespace:testId\""),
-			wantErr: errors.New("invalid DefinitionID: test.namespace:testId"),
+			arg:     []byte("\"test.namespace:test-name\""),
+			wantErr: errors.New("invalid DefinitionID: test.namespace:test-name"),
 		},
 		"test_definition_id_unmarshal_json_empty": {
 			arg:     []byte(""),
 			wantErr: errors.New("unexpected end of JSON input"),
 		},
 		"test_definition_id_unmarshal_json_invalid_argument": {
-			arg:     []byte("test.namespace:testId:1.0.0"),
+			arg:     []byte("test.namespace:test-name:1.0.0"),
 			wantErr: errors.New("invalid character 'e' in literal true (expecting 'r')"),
 		},
 	}
@@ -197,9 +197,9 @@ func TestDefinitionIDUnmarshalJSON(t *testing.T) {
 			got := &DefinitionID{}
 			err := got.UnmarshalJSON(testCase.arg)
 			if testCase.wantErr != nil {
-				internal.AssertError(t, err, testCase.wantErr)
+				internal.AssertError(t, testCase.wantErr, err)
 			} else {
-				internal.AssertEqual(t, got, testCase.want)
+				internal.AssertEqual(t, testCase.want, got)
 			}
 		})
 	}
@@ -207,7 +207,7 @@ func TestDefinitionIDUnmarshalJSON(t *testing.T) {
 
 func TestDefinitionIDWithNamespace(t *testing.T) {
 	testDefinitionID := &DefinitionID{
-		Name:    "testId",
+		Name:    "test-name",
 		Version: "1.0.0",
 	}
 
@@ -215,12 +215,12 @@ func TestDefinitionIDWithNamespace(t *testing.T) {
 
 	want := &DefinitionID{
 		Namespace: arg,
-		Name:      "testId",
+		Name:      "test-name",
 		Version:   "1.0.0",
 	}
 
 	got := testDefinitionID.WithNamespace(arg)
-	internal.AssertEqual(t, got, want)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestDefinitionIDWithName(t *testing.T) {
@@ -238,23 +238,23 @@ func TestDefinitionIDWithName(t *testing.T) {
 	}
 
 	got := testDefinitionID.WithName(arg)
-	internal.AssertEqual(t, got, want)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestDefinitionIDWithVersion(t *testing.T) {
 	testDefinitionID := &DefinitionID{
 		Namespace: "test.namespace",
-		Name:      "testId",
+		Name:      "test-name",
 	}
 
 	arg := "1.0.0"
 
 	want := &DefinitionID{
 		Namespace: "test.namespace",
-		Name:      "testId",
+		Name:      "test-name",
 		Version:   arg,
 	}
 
 	got := testDefinitionID.WithVersion(arg)
-	internal.AssertEqual(t, got, want)
+	internal.AssertEqual(t, want, got)
 }

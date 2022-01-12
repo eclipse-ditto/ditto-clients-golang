@@ -12,8 +12,9 @@
 package protocol
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/eclipse/ditto-clients-golang/internal"
 )
 
 func TestHeadersCorrelationID(t *testing.T) {
@@ -23,13 +24,14 @@ func TestHeadersCorrelationID(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.CorrelationID(); got != "correlation-id" {
-			t.Errorf("Headers.CorrelationID() = %v, want %v", got, "correlation-id")
-		}
+
+		got := h.CorrelationID()
+		internal.AssertEqual(t, "correlation-id", got)
+
 		arg[HeaderCorrelationID] = nil
-		if got := h.CorrelationID(); got != "" {
-			t.Errorf("Headers.CorrelationID() nil = %v, want \"\"", got)
-		}
+
+		got = h.CorrelationID()
+		internal.AssertEqual(t, "", got)
 	})
 }
 
@@ -40,14 +42,13 @@ func TestHeadersTimeout(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.Timeout(); got != "10" {
-			t.Errorf("Headers.Timeout() = %v, want %v", got, "10")
-		}
-		arg[HeaderTimeout] = nil
-		if got := h.Timeout(); got != "" {
-			t.Errorf("Headers.Timeout() nil = %v, want \"\"", got)
-		}
 
+		got := h.Timeout()
+		internal.AssertEqual(t, "10", got)
+
+		arg[HeaderTimeout] = nil
+		got = h.Timeout()
+		internal.AssertEqual(t, "", got)
 	})
 }
 
@@ -58,13 +59,13 @@ func TestHeadersIsResponseRequired(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.IsResponseRequired(); got != false {
-			t.Errorf("Headers.IsResponseRequired() = %v, want %v", got, false)
-		}
+
+		got := h.IsResponseRequired()
+		internal.AssertFalse(t, got)
+
 		arg[HeaderResponseRequired] = nil
-		if got := h.IsResponseRequired(); got != false {
-			t.Errorf("Headers.IsResponseRequired() nil = %v, want %v", got, false)
-		}
+		got = h.IsResponseRequired()
+		internal.AssertFalse(t, got)
 	})
 }
 
@@ -75,13 +76,13 @@ func TestHeadersChannel(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.Channel(); got != "1" {
-			t.Errorf("Headers.Channel() = %v, want %v", got, "1")
-		}
+
+		got := h.Channel()
+		internal.AssertEqual(t, "1", got)
+
 		arg[HeaderChannel] = nil
-		if got := h.Channel(); got != "" {
-			t.Errorf("Headers.Channel() nil = %v, want \"\"", got)
-		}
+		got = h.Channel()
+		internal.AssertEqual(t, "", got)
 	})
 }
 
@@ -92,13 +93,13 @@ func TestHeadersIsDryRun(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.IsDryRun(); got != false {
-			t.Errorf("Headers.IsDryRun() = %v, want %v", got, false)
-		}
+
+		got := h.IsDryRun()
+		internal.AssertFalse(t, got)
+
 		arg[HeaderDryRun] = nil
-		if got := h.IsDryRun(); got != false {
-			t.Errorf("Headers.IsDryRun() nil = %v, want %v", got, false)
-		}
+		got = h.IsDryRun()
+		internal.AssertFalse(t, got)
 	})
 }
 
@@ -109,13 +110,13 @@ func TestHeadersOrigin(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.Origin(); got != "origin" {
-			t.Errorf("Headers.Origin() = %v, want %v", got, "origin")
-		}
+
+		got := h.Origin()
+		internal.AssertEqual(t, "origin", got)
+
 		arg[HeaderOrigin] = nil
-		if got := h.Origin(); got != "" {
-			t.Errorf("Headers.Origin() nil = %v, want \"\"", got)
-		}
+		got = h.Origin()
+		internal.AssertEqual(t, "", got)
 	})
 }
 
@@ -126,13 +127,13 @@ func TestHeadersOriginator(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.Originator(); got != "ditto-originator" {
-			t.Errorf("Headers.Originator() = %v, want %v", got, "ditto-originator")
-		}
+
+		got := h.Originator()
+		internal.AssertEqual(t, "ditto-originator", got)
+
 		arg[HeaderOriginator] = nil
-		if got := h.Originator(); got != "" {
-			t.Errorf("Headers.Originator() nil = %v, want \"\"", got)
-		}
+		got = h.Originator()
+		internal.AssertEqual(t, "", got)
 	})
 }
 
@@ -143,13 +144,13 @@ func TestHeadersETag(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.ETag(); got != "1" {
-			t.Errorf("Headers.ETag() = %v, want %v", got, "1")
-		}
+
+		got := h.ETag()
+		internal.AssertEqual(t, "1", got)
+
 		arg[HeaderETag] = nil
-		if got := h.ETag(); got != "" {
-			t.Errorf("Headers.ETag() nil = %v, want \"\"", got)
-		}
+		got = h.ETag()
+		internal.AssertEqual(t, "", got)
 	})
 }
 
@@ -160,13 +161,13 @@ func TestHeadersIfMatch(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.IfMatch(); got != "HeaderIfMatch" {
-			t.Errorf("Headers.IfMatch() = %v, want %v", got, "HeaderIfMatch")
-		}
+
+		got := h.IfMatch()
+		internal.AssertEqual(t, "HeaderIfMatch", got)
+
 		arg[HeaderIfMatch] = nil
-		if got := h.IfMatch(); got != "" {
-			t.Errorf("Headers.IfMatch() nil = %v, want \"\"", got)
-		}
+		got = h.IfMatch()
+		internal.AssertEqual(t, "", got)
 	})
 }
 
@@ -177,13 +178,13 @@ func TestHeadersIfNoneMatch(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.IfNoneMatch(); got != "123" {
-			t.Errorf("Headers.IfNoneMatch() = %v, want %v", got, "123")
-		}
+
+		got := h.IfNoneMatch()
+		internal.AssertEqual(t, "123", got)
+
 		arg[HeaderIfNoneMatch] = nil
-		if got := h.IfNoneMatch(); got != "" {
-			t.Errorf("Headers.IfNoneMatch() nil = %v, want \"\"", got)
-		}
+		got = h.IfNoneMatch()
+		internal.AssertEqual(t, "", got)
 	})
 }
 
@@ -194,13 +195,13 @@ func TestHeadersReplyTarget(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.ReplyTarget(); got != int64(123) {
-			t.Errorf("Headers.ReplyTarget() = %v, want %v", got, int64(123))
-		}
+
+		got := h.ReplyTarget()
+		internal.AssertEqual(t, int64(123), got)
+
 		arg[HeaderReplyTarget] = nil
-		if got := h.ReplyTarget(); got != int64(0) {
-			t.Errorf("Headers.ReplyTarget() nil = %v, want %v", got, int64(0))
-		}
+		got = h.ReplyTarget()
+		internal.AssertEqual(t, int64(0), got)
 	})
 }
 
@@ -211,13 +212,13 @@ func TestHeadersReplyTo(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.ReplyTo(); got != "someone" {
-			t.Errorf("Headers.ReplyTo() = %v, want %v", got, "someone")
-		}
+
+		got := h.ReplyTo()
+		internal.AssertEqual(t, "someone", got)
+
 		arg[HeaderReplyTo] = nil
-		if got := h.ReplyTo(); got != "" {
-			t.Errorf("Headers.ReplyTo() nil = %v, want \"\"", got)
-		}
+		got = h.ReplyTo()
+		internal.AssertEqual(t, "", got)
 	})
 }
 
@@ -228,13 +229,13 @@ func TestHeadersVersion(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.Version(); got != int64(1111) {
-			t.Errorf("Headers.Version() = %v, want %v", got, int64(1111))
-		}
+
+		got := h.Version()
+		internal.AssertEqual(t, int64(1111), got)
+
 		arg[HeaderSchemaVersion] = nil
-		if got := h.Version(); got != int64(0) {
-			t.Errorf("Headers.Version() nil = %v, want %v", got, int64(0))
-		}
+		got = h.Version()
+		internal.AssertEqual(t, int64(0), got)
 	})
 }
 
@@ -245,13 +246,13 @@ func TestHeadersContentType(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.ContentType(); got != "HeaderContentType" {
-			t.Errorf("Headers.ContentType() = %v, want %v", got, "HeaderContentType")
-		}
+
+		got := h.ContentType()
+		internal.AssertEqual(t, "HeaderContentType", got)
+
 		arg[HeaderContentType] = nil
-		if got := h.ContentType(); got != "" {
-			t.Errorf("Headers.ContentType() nil = %v, want \"\"", got)
-		}
+		got = h.ContentType()
+		internal.AssertEqual(t, "", got)
 	})
 }
 
@@ -262,9 +263,9 @@ func TestHeadersGeneric(t *testing.T) {
 		h := &Headers{
 			Values: arg,
 		}
-		if got := h.Generic(HeaderContentType); !reflect.DeepEqual(got, arg[HeaderContentType]) {
-			t.Errorf("Headers.Generic() = %v, want %v", got, arg[HeaderContentType])
-		}
+
+		got := h.Generic(HeaderContentType)
+		internal.AssertEqual(t, arg[HeaderContentType], got)
 	})
 }
 
@@ -274,34 +275,33 @@ func TestHeadersMarshalJSON(t *testing.T) {
 	argErr := make(map[string]interface{})
 	someChannel := make(chan int)
 	argErr["Channel"] = someChannel
-	tests := []struct {
-		name    string
+
+	tests := map[string]struct {
 		data    map[string]interface{}
 		want    string
 		wantErr bool
 	}{
-		{
-			name:    "TestHeadersMarshalJSON ok",
+		"test_headers_marshal_JSON_ok": {
 			data:    argOk,
 			want:    "{\"content-type\":\"application/json\"}",
 			wantErr: false,
 		},
-		{
-			name:    "TestHeadersMarshalJSON error",
+		"test_headers_marshal_JSON_error": {
 			data:    argErr,
 			wantErr: true,
 		}}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			h := &Headers{tt.data}
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			h := &Headers{testCase.data}
 			got, err := h.MarshalJSON()
-			if tt.wantErr {
+			if testCase.wantErr {
 				if err == nil {
 					t.Errorf("Headers.MarshalJSON() error must not be nil")
 				}
 			} else {
-				if string(got) != tt.want {
-					t.Errorf("Headers.MarshalJSON() = %v, want %v", string(got), tt.want)
+				if string(got) != testCase.want {
+					t.Errorf("Headers.MarshalJSON() = %v, want %v", string(got), testCase.want)
 				}
 			}
 		})
@@ -310,27 +310,26 @@ func TestHeadersMarshalJSON(t *testing.T) {
 
 func TestHeadersUnmarshalJSON(t *testing.T) {
 	ct := "application/json"
-	tests := []struct {
-		name    string
+
+	tests := map[string]struct {
 		data    string
 		wantErr bool
 	}{
-		{
-			name:    "TestHeadersUnmarshalJSON ok",
+		"test_headers_unmarshal_JSON_ok": {
 			data:    "{\"content-type\":\"application/json\"}",
 			wantErr: false,
 		},
-		{
-			name:    "TestHeadersUnmarshalJSON err",
+		"test_headers_unmarshal_JSON_err": {
 			data:    "",
 			wantErr: true,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
 			got := NewHeaders()
-			err := got.UnmarshalJSON([]byte(tt.data))
-			if tt.wantErr {
+			err := got.UnmarshalJSON([]byte(testCase.data))
+			if testCase.wantErr {
 				if err == nil {
 					t.Errorf("Headers.UnmarshalJSON() error must not be nil")
 				}

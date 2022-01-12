@@ -12,8 +12,9 @@
 package protocol
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/eclipse/ditto-clients-golang/internal"
 )
 
 func TestEnvelopeWithTopic(t *testing.T) {
@@ -27,9 +28,9 @@ func TestEnvelopeWithTopic(t *testing.T) {
 			Action:     ActionSubscribe,
 		}
 		msg := &Envelope{}
-		if got := msg.WithTopic(arg); !reflect.DeepEqual(got.Topic, arg) {
-			t.Errorf("Envelope.WithTopic() = %v, want %v", got.Topic, arg)
-		}
+
+		got := msg.WithTopic(arg)
+		internal.AssertEqual(t, arg, got.Topic)
 	})
 }
 
@@ -37,9 +38,9 @@ func TestEnvelopeWithHeaders(t *testing.T) {
 	t.Run("TestEnvelopeWithHeaders", func(t *testing.T) {
 		arg := NewHeaders(WithChannel("something"))
 		msg := &Envelope{}
-		if got := msg.WithHeaders(arg); !reflect.DeepEqual(got.Headers, arg) {
-			t.Errorf("Envelope.WithHeaders() = %v, want %v", got.Headers, arg)
-		}
+
+		got := msg.WithHeaders(arg)
+		internal.AssertEqual(t, arg, got.Headers)
 	})
 }
 
@@ -47,9 +48,9 @@ func TestEnvelopeWithPath(t *testing.T) {
 	t.Run("TestEnvelopeWithPath", func(t *testing.T) {
 		arg := "somePath"
 		msg := &Envelope{}
-		if got := msg.WithPath(arg); !reflect.DeepEqual(got.Path, arg) {
-			t.Errorf("Envelope.WithPath() = %v, want %v", got.Path, arg)
-		}
+
+		got := msg.WithPath(arg)
+		internal.AssertEqual(t, arg, got.Path)
 	})
 }
 
@@ -57,9 +58,9 @@ func TestEnvelopeWithValue(t *testing.T) {
 	t.Run("TestEnvelopeWithValue", func(t *testing.T) {
 		arg := "someValue"
 		msg := &Envelope{}
-		if got := msg.WithValue(arg); !reflect.DeepEqual(got.Value, arg) {
-			t.Errorf("Envelope.WithValue() = %v, want %v", got.Value, arg)
-		}
+
+		got := msg.WithValue(arg)
+		internal.AssertEqual(t, arg, got.Value)
 	})
 }
 
@@ -67,9 +68,9 @@ func TestEnvelopeWithFields(t *testing.T) {
 	t.Run("TestEnvelopeWithFields", func(t *testing.T) {
 		arg := "someFields"
 		msg := &Envelope{}
-		if got := msg.WithFields(arg); !reflect.DeepEqual(got.Fields, arg) {
-			t.Errorf("Envelope.WithFields() = %v, want %v", got.Fields, arg)
-		}
+
+		got := msg.WithFields(arg)
+		internal.AssertEqual(t, arg, got.Fields)
 	})
 }
 
@@ -77,9 +78,9 @@ func TestEnvelopeWithExtra(t *testing.T) {
 	t.Run("TestEnvelopeWithExtra", func(t *testing.T) {
 		arg := "Extra"
 		msg := &Envelope{}
-		if got := msg.WithExtra(arg); !reflect.DeepEqual(got.Extra, arg) {
-			t.Errorf("Envelope.WithExtra() = %v, want %v", got.Extra, arg)
-		}
+
+		got := msg.WithExtra(arg)
+		internal.AssertEqual(t, arg, got.Extra)
 	})
 }
 
@@ -87,9 +88,9 @@ func TestEnvelopeWithStatus(t *testing.T) {
 	t.Run("TestEnvelopeWithStatus", func(t *testing.T) {
 		arg := 202
 		msg := &Envelope{}
-		if got := msg.WithStatus(arg); !reflect.DeepEqual(got.Status, arg) {
-			t.Errorf("Envelope.WithStatus() = %v, want %v", got.Status, arg)
-		}
+
+		got := msg.WithStatus(arg)
+		internal.AssertEqual(t, arg, got.Status)
 	})
 }
 
@@ -97,9 +98,9 @@ func TestEnvelopeWithRevision(t *testing.T) {
 	t.Run("TestEnvelopeWithRevision", func(t *testing.T) {
 		arg := int64(1001)
 		msg := &Envelope{}
-		if got := msg.WithRevision(arg); !reflect.DeepEqual(got.Revision, arg) {
-			t.Errorf("Envelope.WithRevision() = %v, want %v", got.Revision, arg)
-		}
+
+		got := msg.WithRevision(arg)
+		internal.AssertEqual(t, arg, got.Revision)
 	})
 }
 
@@ -107,8 +108,8 @@ func TestEnvelopeWithTimestamp(t *testing.T) {
 	t.Run("TestEnvelopeWithTimestamp", func(t *testing.T) {
 		arg := "10"
 		msg := &Envelope{}
-		if got := msg.WithTimestamp(arg); !reflect.DeepEqual(got.Timestamp, arg) {
-			t.Errorf("Envelope.WithTimestamp() = %v, want %v", got.Timestamp, arg)
-		}
+
+		got := msg.WithTimestamp(arg)
+		internal.AssertEqual(t, arg, got.Timestamp)
 	})
 }

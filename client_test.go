@@ -45,9 +45,8 @@ func TestNewClient(t *testing.T) {
 		handlers: map[string]Handler{},
 	}
 
-	if got := NewClient(config); !reflect.DeepEqual(got, want) {
-		t.Errorf("NewClient()= %v, want %v", got, want)
-	}
+	got := NewClient(config)
+	internal.AssertEqual(t, want, got)
 }
 
 type mockExecNewClientMQTT func(mockMQTTClient *mock.MockClient, config *Configuration, message string) (*Client, error)
@@ -362,7 +361,7 @@ func TestSubscribe(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			testCase.testClient.Subscribe(testCase.arg...)
 			handlers := testCase.testClient.handlers
-			internal.AssertEqual(t, len(handlers), len(testCase.want))
+			internal.AssertEqual(t, len(testCase.want), len(handlers))
 			for key, element := range testCase.want {
 				got := handlers[key]
 				if got == nil || reflect.ValueOf(got).Pointer() != reflect.ValueOf(element).Pointer() {
@@ -433,10 +432,11 @@ func TestUnsubscribe(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			testCase.testClient.Unsubscribe(testCase.arg...)
 			handlers := testCase.testClient.handlers
-			internal.AssertEqual(t, len(handlers), len(testCase.want))
+			internal.AssertEqual(t, len(testCase.want), len(handlers))
 			for key, element := range testCase.want {
 				got := handlers[key]
-				if got == nil || reflect.ValueOf(got).Pointer() != reflect.ValueOf(element).Pointer() {
+				internal.AssertNotNil(t, got)
+				if reflect.ValueOf(got).Pointer() != reflect.ValueOf(element).Pointer() {
 					t.Errorf("Client.Unsubscribe()= %v, want %v", got, element)
 				}
 			}

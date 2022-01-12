@@ -90,7 +90,7 @@ func (nsID *NamespacedID) WithName(name string) *NamespacedID {
 
 func validateNamespacedID(nsIDString string) ([]string, error) {
 	if len(nsIDString) > 256 {
-		return nil, errors.New("length exceeds 256, invalid NamespacedID" + nsIDString)
+		return nil, errors.New("length exceeds 256, invalid NamespacedID: " + nsIDString)
 	}
 	if matches := regexNamespacedID.FindStringSubmatch(nsIDString); len(matches) == 3 {
 		return matches, nil

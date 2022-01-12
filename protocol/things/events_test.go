@@ -12,9 +12,9 @@ package things
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
+	"github.com/eclipse/ditto-clients-golang/internal"
 	"github.com/eclipse/ditto-clients-golang/model"
 	"github.com/eclipse/ditto-clients-golang/protocol"
 )
@@ -31,9 +31,8 @@ func TestNewEvent(t *testing.T) {
 		Path: pathThing,
 	}
 
-	if got := NewEvent(testNamespaceID); !reflect.DeepEqual(got, want) {
-		t.Errorf("NewEvent() = %v want: %v", got, want)
-	}
+	got := NewEvent(testNamespaceID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestCreated(t *testing.T) {
@@ -48,9 +47,8 @@ func TestCreated(t *testing.T) {
 		Payload: &model.Thing{},
 	}
 
-	if got := testEvent.Created(&model.Thing{}); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.Created() = %v want: %v", got, want)
-	}
+	got := testEvent.Created(&model.Thing{})
+	internal.AssertEqual(t, want, got)
 }
 
 func TestModified(t *testing.T) {
@@ -65,9 +63,8 @@ func TestModified(t *testing.T) {
 		Payload: &model.Feature{},
 	}
 
-	if got := testEvent.Modified(&model.Feature{}); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.Modified() = %v want: %v", got, want)
-	}
+	got := testEvent.Modified(&model.Feature{})
+	internal.AssertEqual(t, want, got)
 }
 
 func TestMerged(t *testing.T) {
@@ -82,9 +79,8 @@ func TestMerged(t *testing.T) {
 		Payload: &model.Feature{},
 	}
 
-	if got := testEvent.Merged(&model.Feature{}); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.Merged() = %v want: %v", got, want)
-	}
+	got := testEvent.Merged(&model.Feature{})
+	internal.AssertEqual(t, want, got)
 }
 
 func TestDeleted(t *testing.T) {
@@ -98,9 +94,8 @@ func TestDeleted(t *testing.T) {
 		},
 	}
 
-	if got := testEvent.Deleted(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.Deleted() = %v want: %v", got, want)
-	}
+	got := testEvent.Deleted()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventPolicyID(t *testing.T) {
@@ -110,9 +105,8 @@ func TestEventPolicyID(t *testing.T) {
 		Path: pathThingPolicyID,
 	}
 
-	if got := testEmptyEvent.PolicyID(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.PolicyID() = %v want: %v", got, want)
-	}
+	got := testEmptyEvent.PolicyID()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventDefinition(t *testing.T) {
@@ -122,9 +116,8 @@ func TestEventDefinition(t *testing.T) {
 		Path: pathThingDefinition,
 	}
 
-	if got := testEmptyEvent.Definition(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.Definition() = %v want: %v", got, want)
-	}
+	got := testEmptyEvent.Definition()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventAttributes(t *testing.T) {
@@ -134,9 +127,8 @@ func TestEventAttributes(t *testing.T) {
 		Path: pathThingAttributes,
 	}
 
-	if got := testEmptyEvent.Attributes(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.Attributes() = %v want: %v", got, want)
-	}
+	got := testEmptyEvent.Attributes()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventAttribute(t *testing.T) {
@@ -146,9 +138,8 @@ func TestEventAttribute(t *testing.T) {
 		Path: fmt.Sprintf(pathThingAttributeFormat, testAttributeID),
 	}
 
-	if got := testEmptyEvent.Attribute(testAttributeID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.Attribute() = %v want: %v", got, want)
-	}
+	got := testEmptyEvent.Attribute(testAttributeID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventFeatures(t *testing.T) {
@@ -158,9 +149,8 @@ func TestEventFeatures(t *testing.T) {
 		Path: pathThingFeatures,
 	}
 
-	if got := testEmptyEvent.Features(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.Features() = %v want: %v", got, want)
-	}
+	got := testEmptyEvent.Features()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventFeature(t *testing.T) {
@@ -170,9 +160,8 @@ func TestEventFeature(t *testing.T) {
 		Path: fmt.Sprintf(pathThingFeatureFormat, testFeatureID),
 	}
 
-	if got := testEmptyEvent.Feature(testFeatureID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.Feature() = %v want: %v", got, want)
-	}
+	got := testEmptyEvent.Feature(testFeatureID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventFeatureDefinition(t *testing.T) {
@@ -182,9 +171,8 @@ func TestEventFeatureDefinition(t *testing.T) {
 		Path: fmt.Sprintf(pathThingFeatureDefinitionFormat, testFeatureID),
 	}
 
-	if got := testEmptyEvent.FeatureDefinition(testFeatureID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.FeatureDefinition() = %v want: %v", got, want)
-	}
+	got := testEmptyEvent.FeatureDefinition(testFeatureID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventFeatureProperties(t *testing.T) {
@@ -194,9 +182,8 @@ func TestEventFeatureProperties(t *testing.T) {
 		Path: fmt.Sprintf(pathThingFeaturePropertiesFormat, testFeatureID),
 	}
 
-	if got := testEmptyEvent.FeatureProperties(testFeatureID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.FeatureProperties() = %v want: %v", got, want)
-	}
+	got := testEmptyEvent.FeatureProperties(testFeatureID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventFeatureProperty(t *testing.T) {
@@ -206,9 +193,8 @@ func TestEventFeatureProperty(t *testing.T) {
 		Path: fmt.Sprintf(pathThingFeaturePropertyFormat, testFeatureID, testPropertyID),
 	}
 
-	if got := testEmptyEvent.FeatureProperty(testFeatureID, testPropertyID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.FeatureProperty() = %v want: %v", got, want)
-	}
+	got := testEmptyEvent.FeatureProperty(testFeatureID, testPropertyID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventFeatureDesiredProperties(t *testing.T) {
@@ -218,9 +204,8 @@ func TestEventFeatureDesiredProperties(t *testing.T) {
 		Path: fmt.Sprintf(pathThingFeatureDesiredPropertiesFormat, testFeatureID),
 	}
 
-	if got := testEmptyEvent.FeatureDesiredProperties(testFeatureID); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.FeatureDesiredProperties() = %v want: %v", got, want)
-	}
+	got := testEmptyEvent.FeatureDesiredProperties(testFeatureID)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventFeatureDesiredProperty(t *testing.T) {
@@ -230,9 +215,8 @@ func TestEventFeatureDesiredProperty(t *testing.T) {
 		Path: fmt.Sprintf(pathThingFeatureDesiredPropertyFormat, testFeatureID, testPropertyPath),
 	}
 
-	if got := testEmptyEvent.FeatureDesiredProperty(testFeatureID, testPropertyPath); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.FeatureDesiredProperty() = %v want: %v", got, want)
-	}
+	got := testEmptyEvent.FeatureDesiredProperty(testFeatureID, testPropertyPath)
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventLive(t *testing.T) {
@@ -246,9 +230,8 @@ func TestEventLive(t *testing.T) {
 		},
 	}
 
-	if got := testEvent.Live(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.Live() = %v want: %v", got, want)
-	}
+	got := testEvent.Live()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventTwin(t *testing.T) {
@@ -262,9 +245,8 @@ func TestEventTwin(t *testing.T) {
 		},
 	}
 
-	if got := testEvent.Twin(); !reflect.DeepEqual(got, want) {
-		t.Errorf("Event.Twin() = %v want: %v", got, want)
-	}
+	got := testEvent.Twin()
+	internal.AssertEqual(t, want, got)
 }
 
 func TestEventEnvelope(t *testing.T) {
@@ -301,9 +283,8 @@ func TestEventEnvelope(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			if got := event.Envelope(testCase.arg...); !reflect.DeepEqual(got, testCase.want) {
-				t.Errorf("Event.Envelope() = %v want: %v", got, testCase.want)
-			}
+			got := event.Envelope(testCase.arg...)
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }

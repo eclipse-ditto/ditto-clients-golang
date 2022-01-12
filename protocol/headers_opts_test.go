@@ -15,6 +15,8 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+
+	"github.com/eclipse/ditto-clients-golang/internal"
 )
 
 func WithError() HeaderOpt {
@@ -88,134 +90,134 @@ func TestNewHeaders(t *testing.T) {
 func TestWithCorrelationID(t *testing.T) {
 	t.Run("TestWithCorrelationID", func(t *testing.T) {
 		cid := "correlationId"
-		if got := NewHeaders(WithCorrelationID(cid)); !reflect.DeepEqual(got.CorrelationID(), cid) {
-			t.Errorf("WithCorrelationID() = %v, want %v", got.CorrelationID(), cid)
-		}
+
+		got := NewHeaders(WithCorrelationID(cid))
+		internal.AssertEqual(t, cid, got.CorrelationID())
 	})
 }
 
 func TestWithReplyTo(t *testing.T) {
 	t.Run("TestWithReplyTo", func(t *testing.T) {
 		rto := "replyto"
-		if got := NewHeaders(WithReplyTo(rto)); !reflect.DeepEqual(got.ReplyTo(), rto) {
-			t.Errorf("WithReplyTo() = %v, want %v", got.ReplyTo(), rto)
-		}
+
+		got := NewHeaders(WithReplyTo(rto))
+		internal.AssertEqual(t, rto, got.ReplyTo())
 	})
 }
 
 func TestWithReplyTarget(t *testing.T) {
 	t.Run("TestWithReplyTarget", func(t *testing.T) {
 		rt := "11111"
-		if got := NewHeaders(WithReplyTarget(rt)); !reflect.DeepEqual(got.Values[HeaderReplyTarget], rt) {
-			t.Errorf("WithReplyTarget() = %v, want %v", got.Values[HeaderReplyTarget], rt)
-		}
+
+		got := NewHeaders(WithReplyTarget(rt))
+		internal.AssertEqual(t, rt, got.Values[HeaderReplyTarget])
 	})
 }
 
 func TestWithChannel(t *testing.T) {
 	t.Run("TestWithChannel", func(t *testing.T) {
 		cha := "channel"
-		if got := NewHeaders(WithChannel(cha)); !reflect.DeepEqual(got.Channel(), cha) {
-			t.Errorf("WithChannel() = %v, want %v", got.Channel(), cha)
-		}
+
+		got := NewHeaders(WithChannel(cha))
+		internal.AssertEqual(t, cha, got.Channel())
 	})
 }
 
 func TestWithResponseRequired(t *testing.T) {
 	t.Run("TestWithResponseRequired", func(t *testing.T) {
 		rrq := true
-		if got := NewHeaders(WithResponseRequired(rrq)); !reflect.DeepEqual(got.IsResponseRequired(), rrq) {
-			t.Errorf("WithResponseRequired() = %v, want %v", got.IsResponseRequired(), rrq)
-		}
+
+		got := NewHeaders(WithResponseRequired(rrq))
+		internal.AssertEqual(t, rrq, got.IsResponseRequired())
 	})
 }
 
 func TestWithOriginator(t *testing.T) {
 	t.Run("TestWithOriginator", func(t *testing.T) {
 		org := "originator"
-		if got := NewHeaders(WithOriginator(org)); !reflect.DeepEqual(got.Originator(), org) {
-			t.Errorf("WithOriginator() = %v, want %v", got.Originator(), org)
-		}
+
+		got := NewHeaders(WithOriginator(org))
+		internal.AssertEqual(t, org, got.Originator())
 	})
 }
 
 func TestWithOrigin(t *testing.T) {
 	t.Run("TestWithOrigin", func(t *testing.T) {
 		org := "origin"
-		if got := NewHeaders(WithOrigin(org)); !reflect.DeepEqual(got.Origin(), org) {
-			t.Errorf("WithOrigin() = %v, want %v", got.Origin(), org)
-		}
+
+		got := NewHeaders(WithOrigin(org))
+		internal.AssertEqual(t, org, got.Origin())
 	})
 }
 
 func TestWithDryRun(t *testing.T) {
 	t.Run("TestWithDryRun", func(t *testing.T) {
 		dry := true
-		if got := NewHeaders(WithDryRun(dry)); !reflect.DeepEqual(got.IsDryRun(), dry) {
-			t.Errorf("WithDryRun() = %v, want %v", got.IsDryRun(), dry)
-		}
+
+		got := NewHeaders(WithDryRun(dry))
+		internal.AssertEqual(t, dry, got.IsDryRun())
 	})
 }
 
 func TestWithETag(t *testing.T) {
 	t.Run("TestWithETag", func(t *testing.T) {
 		et := "etag"
-		if got := NewHeaders(WithETag(et)); !reflect.DeepEqual(got.ETag(), et) {
-			t.Errorf("WithETag() = %v, want %v", got.ETag(), et)
-		}
+
+		got := NewHeaders(WithETag(et))
+		internal.AssertEqual(t, et, got.ETag())
 	})
 }
 
 func TestWithIfMatch(t *testing.T) {
 	t.Run("TestWithIfMatch", func(t *testing.T) {
 		im := "ifMatch"
-		if got := NewHeaders(WithIfMatch(im)); !reflect.DeepEqual(got.IfMatch(), im) {
-			t.Errorf("WithIfMatch() = %v, want %v", got.IfMatch(), im)
-		}
+
+		got := NewHeaders(WithIfMatch(im))
+		internal.AssertEqual(t, im, got.IfMatch())
 	})
 }
 
 func TestWithIfNoneMatch(t *testing.T) {
 	t.Run("TestWithIfNoneMatch", func(t *testing.T) {
 		inm := "ifNoneMatch"
-		if got := NewHeaders(WithIfNoneMatch(inm)); !reflect.DeepEqual(got.IfNoneMatch(), inm) {
-			t.Errorf("WithIfNoneMatch() = %v, want %v", got.IfNoneMatch(), inm)
-		}
+
+		got := NewHeaders(WithIfNoneMatch(inm))
+		internal.AssertEqual(t, inm, got.IfNoneMatch())
 	})
 }
 
 func TestWithTimeout(t *testing.T) {
 	t.Run("TestWithTimeout", func(t *testing.T) {
 		tmo := "10"
-		if got := NewHeaders(WithTimeout(tmo)); !reflect.DeepEqual(got.Timeout(), tmo) {
-			t.Errorf("WithTimeout() = %v, want %v", got.Timeout(), tmo)
-		}
+
+		got := NewHeaders(WithTimeout(tmo))
+		internal.AssertEqual(t, tmo, got.Timeout())
 	})
 }
 
 func TestWithSchemaVersion(t *testing.T) {
 	t.Run("TestWithSchemaVersion", func(t *testing.T) {
 		sv := "123456789"
-		if got := NewHeaders(WithSchemaVersion("123456789")); !reflect.DeepEqual(got.Values[HeaderSchemaVersion], sv) {
-			t.Errorf("WithSchemaVersion() = %v, want %v", got.Values[HeaderSchemaVersion], sv)
-		}
+
+		got := NewHeaders(WithSchemaVersion("123456789"))
+		internal.AssertEqual(t, sv, got.Values[HeaderSchemaVersion])
 	})
 }
 
 func TestWithContentType(t *testing.T) {
 	t.Run("TestWithContentType", func(t *testing.T) {
 		hct := "contentType"
-		if got := NewHeaders(WithContentType(hct)); !reflect.DeepEqual(got.ContentType(), hct) {
-			t.Errorf("WithContentType() = %v, want %v", got.ContentType(), hct)
-		}
+
+		got := NewHeaders(WithContentType(hct))
+		internal.AssertEqual(t, hct, got.ContentType())
 	})
 }
 
 func TestWithGeneric(t *testing.T) {
 	t.Run("TestWithGeneric", func(t *testing.T) {
 		hct := "contentType"
-		if got := NewHeaders(WithGeneric(HeaderContentType, hct)); !reflect.DeepEqual(got.ContentType(), hct) {
-			t.Errorf("WithGeneric() = %v, want %v", got.ContentType(), hct)
-		}
+
+		got := NewHeaders(WithGeneric(HeaderContentType, hct))
+		internal.AssertEqual(t, hct, got.ContentType())
 	})
 }
