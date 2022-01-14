@@ -39,7 +39,7 @@ var regexDefinitionID = regexp.MustCompile("^" + fmt.Sprintf(definitionIDTemplat
 // NewDefinitionIDFrom creates a new DefinitionID instance from a provided string in the form of 'namespace:name:version'.
 // Returns nil if the provided string doesn't match the form.
 func NewDefinitionIDFrom(full string) *DefinitionID {
-	if matches, err := validateDefinitionID(full); err == nil {
+	if matches, err := isValidDefinitionID(full); err == nil {
 		return &DefinitionID{Namespace: matches[1], Name: matches[2], Version: matches[3]}
 	}
 	return nil
@@ -48,7 +48,7 @@ func NewDefinitionIDFrom(full string) *DefinitionID {
 // NewDefinitionID creates a new DefinitionID instance with the namespace, name and version provided.
 // Returns nil if the provided string doesn't match the form.
 func NewDefinitionID(namespace string, name string, version string) *DefinitionID {
-	if _, err := validateDefinitionID(fmt.Sprintf(definitionIDTemplate, namespace, name, version)); err == nil {
+	if _, err := isValidDefinitionID(fmt.Sprintf(definitionIDTemplate, namespace, name, version)); err == nil {
 		return &DefinitionID{Namespace: namespace, Name: name, Version: version}
 	}
 	return nil
@@ -59,10 +59,12 @@ func (definitionID *DefinitionID) String() string {
 	return fmt.Sprintf(definitionIDTemplate, definitionID.Namespace, definitionID.Name, definitionID.Version)
 }
 
+// MarshalJSON marshals DefinitionID.
 func (definitionID *DefinitionID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(definitionID.String())
 }
 
+// UnmarshalJSON unmarshals DefinitionID.
 func (definitionID *DefinitionID) UnmarshalJSON(data []byte) error {
 	var defIDString = ""
 
@@ -70,7 +72,7 @@ func (definitionID *DefinitionID) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	matches, err := validateDefinitionID(defIDString)
+	matches, err := isValidDefinitionID(defIDString)
 	if err != nil {
 		return err
 	}
@@ -99,7 +101,7 @@ func (definitionID *DefinitionID) WithVersion(version string) *DefinitionID {
 	return definitionID
 }
 
-func validateDefinitionID(defIDString string) ([]string, error) {
+func isValidDefinitionID(defIDString string) ([]string, error) {
 	if matches := regexDefinitionID.FindStringSubmatch(defIDString); len(matches) == 4 {
 		return matches, nil
 	}

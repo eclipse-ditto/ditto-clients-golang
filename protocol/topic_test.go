@@ -175,19 +175,17 @@ func TestTopicUnmarshalJSON(t *testing.T) {
 				if testCase.wantErr {
 					t.Logf("Topic.UnmarshalJSON() error = %v", err)
 					return
-				} else {
-					t.Errorf("Topic.UnmarshalJSON() unexpected error = %v", err)
-					return
 				}
+				t.Errorf("Topic.UnmarshalJSON() unexpected error = %v", err)
+				return
 			}
 			if topic.String() == "" {
 				if testCase.wantErr {
 					t.Logf("Topic.UnmarshalJSON() topic is empty")
 					return
-				} else {
-					t.Errorf("Topic.UnmarshalJSON() unexpected empty topic")
-					return
 				}
+				t.Errorf("Topic.UnmarshalJSON() unexpected empty topic")
+				return
 			}
 			if topic.String() != testCase.data {
 				t.Errorf("Topic.UnmarshalJSON() want = %v, got %v", topic.String(), testCase.data)

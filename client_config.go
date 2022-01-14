@@ -28,7 +28,7 @@ type ConnectHandler func(client *Client)
 // ConnectionLostHandler is called is the connection is lost during runtime.
 type ConnectionLostHandler func(client *Client, err error)
 
-// Credentials represents a user credentials for authentication used by the underlying connection (e.g. MQTT)
+// Credentials represents a user credentials for authentication used by the underlying connection (e.g. MQTT).
 type Credentials struct {
 	Username string
 	Password string
@@ -58,7 +58,7 @@ func (cfg *Configuration) Broker() string {
 	return cfg.broker
 }
 
-// KeepAlive provides the keep alive connection's period
+// KeepAlive provides the keep alive connection's period.
 // The default is 30 seconds.
 func (cfg *Configuration) KeepAlive() time.Duration {
 	return cfg.keepAlive
@@ -120,7 +120,7 @@ func (cfg *Configuration) WithConnectHandler(connectHandler ConnectHandler) *Con
 	return cfg
 }
 
-// WithConnectionLostHandler configures the connectionLostHandler to be notified is the Client's connection gets lost during rutnime.
+// WithConnectionLostHandler configures the connectionLostHandler to be notified is the Client's connection gets lost during runtime.
 func (cfg *Configuration) WithConnectionLostHandler(connectionLostHandler ConnectionLostHandler) *Configuration {
 	cfg.connectionLostHandler = connectionLostHandler
 	return cfg

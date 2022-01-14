@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 )
 
+// Ditto-specific headers constants.
 const (
 	HeaderCorrelationID    = "correlation-id"
 	HeaderResponseRequired = "response-required"
@@ -39,6 +40,7 @@ type Headers struct {
 	Values map[string]interface{}
 }
 
+// CorrelationID returns the 'correlation-id' header value or empty string if not set.
 func (h *Headers) CorrelationID() string {
 	if h.Values[HeaderCorrelationID] == nil {
 		return ""
@@ -46,6 +48,7 @@ func (h *Headers) CorrelationID() string {
 	return h.Values[HeaderCorrelationID].(string)
 }
 
+// Timeout returns the 'timeout' header value or empty string if not set.
 func (h *Headers) Timeout() string {
 	if h.Values[HeaderTimeout] == nil {
 		return ""
@@ -53,86 +56,113 @@ func (h *Headers) Timeout() string {
 	return h.Values[HeaderTimeout].(string)
 }
 
+// IsResponseRequired returns the 'response-required' header value or empty string if not set.
 func (h *Headers) IsResponseRequired() bool {
 	if h.Values[HeaderResponseRequired] == nil {
 		return false
 	}
 	return h.Values[HeaderResponseRequired].(bool)
 }
+
+// Channel returns the 'ditto-channel' header value or empty string if not set.
 func (h *Headers) Channel() string {
 	if h.Values[HeaderChannel] == nil {
 		return ""
 	}
 	return h.Values[HeaderChannel].(string)
 }
+
+// IsDryRun returns the 'ditto-dry-run' header value or empty string if not set.
 func (h *Headers) IsDryRun() bool {
 	if h.Values[HeaderDryRun] == nil {
 		return false
 	}
 	return h.Values[HeaderDryRun].(bool)
 }
+
+// Origin returns the 'origin' header value or empty string if not set.
 func (h *Headers) Origin() string {
 	if h.Values[HeaderOrigin] == nil {
 		return ""
 	}
 	return h.Values[HeaderOrigin].(string)
 }
+
+// Originator returns the 'ditto-originator' header value or empty string if not set.
 func (h *Headers) Originator() string {
 	if h.Values[HeaderOriginator] == nil {
 		return ""
 	}
 	return h.Values[HeaderOriginator].(string)
 }
+
+// ETag returns the 'ETag' header value or empty string if not set.
 func (h *Headers) ETag() string {
 	if h.Values[HeaderETag] == nil {
 		return ""
 	}
 	return h.Values[HeaderETag].(string)
 }
+
+// IfMatch returns the 'If-Match' header value or empty string if not set.
 func (h *Headers) IfMatch() string {
 	if h.Values[HeaderIfMatch] == nil {
 		return ""
 	}
 	return h.Values[HeaderIfMatch].(string)
 }
+
+// IfNoneMatch returns the 'If-None-Match' header value or empty string if not set.
 func (h *Headers) IfNoneMatch() string {
 	if h.Values[HeaderIfNoneMatch] == nil {
 		return ""
 	}
 	return h.Values[HeaderIfNoneMatch].(string)
 }
+
+// ReplyTarget returns the 'ditto-reply-target' header value or empty string if not set.
 func (h *Headers) ReplyTarget() int64 {
 	if h.Values[HeaderReplyTarget] == nil {
 		return 0
 	}
 	return h.Values[HeaderReplyTarget].(int64)
 }
+
+// ReplyTo returns the 'reply-to' header value or empty string if not set.
 func (h *Headers) ReplyTo() string {
 	if h.Values[HeaderReplyTo] == nil {
 		return ""
 	}
 	return h.Values[HeaderReplyTo].(string)
 }
+
+// Version returns the 'version' header value or empty string if not set.
 func (h *Headers) Version() int64 {
 	if h.Values[HeaderSchemaVersion] == nil {
 		return 0
 	}
 	return h.Values[HeaderSchemaVersion].(int64)
 }
+
+// ContentType returns the 'content-type' header value or empty string if not set.
 func (h *Headers) ContentType() string {
 	if h.Values[HeaderContentType] == nil {
 		return ""
 	}
 	return h.Values[HeaderContentType].(string)
 }
+
+// Generic returns the value of the provided key header and if a header with such key is present.
 func (h *Headers) Generic(id string) interface{} {
 	return h.Values[id]
 }
 
+// MarshalJSON marshels Headers.
 func (h *Headers) MarshalJSON() ([]byte, error) {
 	return json.Marshal(h.Values)
 }
 
+// UnmarshalJSON unmarshels Headers.
 func (h *Headers) UnmarshalJSON(data []byte) error {
 	var v map[string]interface{}
 	if err := json.Unmarshal(data, &v); err != nil {

@@ -157,7 +157,7 @@ func (client *Client) Send(message *protocol.Envelope) error {
 }
 
 // Subscribe ensures that all incoming Ditto messages will be transferred to the provided Handlers.
-// As subscribing in Ditto is transport-specific - this is a lighweight version of a default subscription that is applicable in the MQTT use case.
+// As subscribing in Ditto is transport-specific - this is a lightweight version of a default subscription that is applicable in the MQTT use case.
 func (client *Client) Subscribe(handlers ...Handler) {
 	client.handlersLock.Lock()
 	defer client.handlersLock.Unlock()

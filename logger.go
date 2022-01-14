@@ -13,20 +13,23 @@ package ditto
 
 type (
 	// Logger interface allows plugging of a logger implementation that
-	// fits best the needs of the application that is to use the Ditto library
+	// fits best the needs of the application that is to use the Ditto library.
 	Logger interface {
 		Println(v ...interface{})
 		Printf(format string, v ...interface{})
 	}
 
-	// LoggerStub provides an empty default implementation
+	// LoggerStub provides an empty default implementation.
 	LoggerStub struct{}
 )
 
-func (LoggerStub) Println(v ...interface{})               {}
+// Println provides an empty default implementation for logging.
+func (LoggerStub) Println(v ...interface{}) {}
+
+// Printf provides an empty default implementation for formatted logging.
 func (LoggerStub) Printf(format string, v ...interface{}) {}
 
-// Levels of the library's output that can be configured during package initialization in init()
+// Levels of the library's output that can be configured during package initialization in init().
 var (
 	INFO  Logger = LoggerStub{}
 	WARN  Logger = LoggerStub{}
