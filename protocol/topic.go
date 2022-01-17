@@ -25,24 +25,32 @@ import (
 type TopicCriterion string
 
 const (
+	// CriterionCommands represents the commands topic criterion.
 	CriterionCommands TopicCriterion = "commands"
-	CriterionEvents   TopicCriterion = "events"
-	CriterionSearch   TopicCriterion = "search"
+	// CriterionEvents represents the events topic criterion.
+	CriterionEvents TopicCriterion = "events"
+	// CriterionSearch represents the search topic criterion.
+	CriterionSearch TopicCriterion = "search"
+	// CriterionMessages represents the messages topic criterion.
 	CriterionMessages TopicCriterion = "messages"
-	CriterionErrors   TopicCriterion = "errors"
+	// CriterionErrors represents the errors topic criterion.
+	CriterionErrors TopicCriterion = "errors"
 )
 
 // TopicChannel is a representation of the defined by Ditto topic channel options.
 type TopicChannel string
 
 const (
+	// ChannelTwin represents the twin channel topic.
 	ChannelTwin TopicChannel = "twin"
+	// ChannelLive represents the live channel topic.
 	ChannelLive TopicChannel = "live"
 )
 
 // TopicAction is a representation of the defined by Ditto topic action options.
 type TopicAction string
 
+// Action constants.
 const (
 	ActionCreate    TopicAction = "create"
 	ActionCreated   TopicAction = "created"
@@ -65,7 +73,9 @@ const (
 type TopicGroup string
 
 const (
-	GroupThings   TopicGroup = "things"
+	// GroupThings represents the things group in the topic path.
+	GroupThings TopicGroup = "things"
+	// GroupPolicies represents the policies group in the topic path.
 	GroupPolicies TopicGroup = "policies"
 )
 
@@ -108,10 +118,12 @@ func (topic *Topic) String() string {
 	}
 }
 
+// MarshalJSON marshals Topic.
 func (topic *Topic) MarshalJSON() ([]byte, error) {
 	return json.Marshal(topic.String())
 }
 
+// UnmarshalJSON unmarshals Topic.
 func (topic *Topic) UnmarshalJSON(data []byte) error {
 	var v string
 	if err := json.Unmarshal(data, &v); err != nil {

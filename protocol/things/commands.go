@@ -201,7 +201,7 @@ func (cmd *Command) Twin() *Command {
 	return cmd
 }
 
-// Envelope generates the Ditto message applying all configurations and optionally all Headers provided.
+// Envelope generates the Ditto envelope with command's data applying all configurations and optionally all Headers provided.
 func (cmd *Command) Envelope(headerOpts ...protocol.HeaderOpt) *protocol.Envelope {
 	msg := &protocol.Envelope{
 		Topic: cmd.Topic,

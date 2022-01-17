@@ -159,7 +159,7 @@ func (event *Event) Twin() *Event {
 	return event
 }
 
-// Envelope generates the Ditto message applying all configurations and optionally all Headers provided.
+// Envelope generates the Ditto envelope with event's data applying all configurations and optionally all Headers provided.
 func (event *Event) Envelope(headerOpts ...protocol.HeaderOpt) *protocol.Envelope {
 	msg := &protocol.Envelope{
 		Topic: event.Topic,

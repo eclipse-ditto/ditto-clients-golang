@@ -23,7 +23,7 @@ const namespacedIDTemplate = "%s:%s"
 
 var regexNamespacedID = regexp.MustCompile("^(|(?:[a-zA-Z]\\w*)(?:[.\\-][a-zA-Z]\\w*)*):([^\\x00-\\x1F\\x7F-\\xFF/]+)$")
 
-// NamespacedID represents the namespaced entity ID defined by the Ditto specification.
+// NamespacedID represents the namespaced ID defined by the Ditto specification.
 // It is a unique identifier representing a Thing compliant with the Ditto requirements:
 // - namespace and name separated by a : (colon)
 // - have a maximum length of 256 characters.
@@ -38,7 +38,7 @@ func NewNamespacedID(namespace string, name string) *NamespacedID {
 	if strings.Contains(namespace, ":") {
 		return nil
 	}
-	if _, err := validateNamespacedID(fmt.Sprintf(namespacedIDTemplate, namespace, name)); err == nil {
+	if _, err := isValidNamespacedID(fmt.Sprintf(namespacedIDTemplate, namespace, name)); err == nil {
 		return &NamespacedID{Namespace: namespace, Name: name}
 	}
 	return nil
@@ -47,7 +47,7 @@ func NewNamespacedID(namespace string, name string) *NamespacedID {
 // NewNamespacedIDFrom creates a new NamespacedID instance using the provided string in the valid form of 'namespace:name'.
 // Returns nil if the provided string doesn't match the form.
 func NewNamespacedIDFrom(full string) *NamespacedID {
-	if matches, err := validateNamespacedID(full); err == nil {
+	if matches, err := isValidNamespacedID(full); err == nil {
 		return &NamespacedID{Namespace: matches[1], Name: matches[2]}
 	}
 	return nil
@@ -58,16 +58,18 @@ func (nsID *NamespacedID) String() string {
 	return fmt.Sprintf(namespacedIDTemplate, nsID.Namespace, nsID.Name)
 }
 
+// MarshalJSON marshals NamespacedID.
 func (nsID *NamespacedID) MarshalJSON() ([]byte, error) {
 	return json.Marshal(nsID.String())
 }
 
+// UnmarshalJSON unmarshals NamespacedID.
 func (nsID *NamespacedID) UnmarshalJSON(data []byte) error {
 	var nsIDString = ""
 	if err := json.Unmarshal(data, &nsIDString); err != nil {
 		return err
 	}
-	matches, err := validateNamespacedID(nsIDString)
+	matches, err := isValidNamespacedID(nsIDString)
 	if err != nil {
 		return err
 	}
@@ -88,7 +90,7 @@ func (nsID *NamespacedID) WithName(name string) *NamespacedID {
 	return nsID
 }
 
-func validateNamespacedID(nsIDString string) ([]string, error) {
+func isValidNamespacedID(nsIDString string) ([]string, error) {
 	if len(nsIDString) > 256 {
 		return nil, errors.New("length exceeds 256, invalid NamespacedID: " + nsIDString)
 	}

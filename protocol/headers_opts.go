@@ -34,18 +34,23 @@ func NewHeaders(opts ...HeaderOpt) *Headers {
 	return res
 }
 
+// WithCorrelationID sets the 'correlation-id' header value.
 func WithCorrelationID(correlationID string) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderCorrelationID] = correlationID
 		return nil
 	}
 }
+
+// WithReplyTo sets the 'reply-to' header value.
 func WithReplyTo(replyTo string) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderReplyTo] = replyTo
 		return nil
 	}
 }
+
+// WithReplyTarget sets the 'ditto-reply-target' header value.
 func WithReplyTarget(replyTarget string) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderReplyTarget] = replyTarget
@@ -53,6 +58,7 @@ func WithReplyTarget(replyTarget string) HeaderOpt {
 	}
 }
 
+// WithChannel sets the 'ditto-channel' header value.
 func WithChannel(channel string) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderChannel] = channel
@@ -60,6 +66,7 @@ func WithChannel(channel string) HeaderOpt {
 	}
 }
 
+// WithResponseRequired sets the 'response-required' header value.
 func WithResponseRequired(isResponseRequired bool) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderResponseRequired] = isResponseRequired
@@ -67,6 +74,7 @@ func WithResponseRequired(isResponseRequired bool) HeaderOpt {
 	}
 }
 
+// WithOriginator sets the 'ditto-originator' header value.
 func WithOriginator(dittoOriginator string) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderOriginator] = dittoOriginator
@@ -74,12 +82,15 @@ func WithOriginator(dittoOriginator string) HeaderOpt {
 	}
 }
 
+// WithOrigin sets the 'origin' header value.
 func WithOrigin(origin string) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderOrigin] = origin
 		return nil
 	}
 }
+
+// WithDryRun sets the 'ditto-dry-run' header value.
 func WithDryRun(isDryRun bool) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderDryRun] = isDryRun
@@ -87,6 +98,7 @@ func WithDryRun(isDryRun bool) HeaderOpt {
 	}
 }
 
+// WithETag sets the 'ETag' header value.
 func WithETag(eTag string) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderETag] = eTag
@@ -94,6 +106,7 @@ func WithETag(eTag string) HeaderOpt {
 	}
 }
 
+// WithIfMatch sets the 'If-Match' header value.
 func WithIfMatch(ifMatch string) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderIfMatch] = ifMatch
@@ -101,6 +114,7 @@ func WithIfMatch(ifMatch string) HeaderOpt {
 	}
 }
 
+// WithIfNoneMatch sets the 'If-None-Match' header value.
 func WithIfNoneMatch(ifNoneMatch string) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderIfNoneMatch] = ifNoneMatch
@@ -108,12 +122,15 @@ func WithIfNoneMatch(ifNoneMatch string) HeaderOpt {
 	}
 }
 
+// WithTimeout sets the 'timeout' header value.
 func WithTimeout(timeout string) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderTimeout] = timeout
 		return nil
 	}
 }
+
+// WithSchemaVersion sets the 'version' header value.
 func WithSchemaVersion(schemaVersion string) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderSchemaVersion] = schemaVersion
@@ -121,6 +138,7 @@ func WithSchemaVersion(schemaVersion string) HeaderOpt {
 	}
 }
 
+// WithContentType sets the 'content-type' header value.
 func WithContentType(contentType string) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[HeaderContentType] = contentType
@@ -128,6 +146,7 @@ func WithContentType(contentType string) HeaderOpt {
 	}
 }
 
+// WithGeneric sets the value of the provided key header.
 func WithGeneric(headerID string, value interface{}) HeaderOpt {
 	return func(headers *Headers) error {
 		headers.Values[headerID] = value

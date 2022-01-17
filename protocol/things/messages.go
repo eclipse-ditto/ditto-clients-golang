@@ -13,6 +13,7 @@ package things
 
 import (
 	"fmt"
+
 	"github.com/eclipse/ditto-clients-golang/model"
 	"github.com/eclipse/ditto-clients-golang/protocol"
 )
@@ -29,7 +30,7 @@ const (
 // - the type of the communication - Inbox, Outbox
 // - the entity that was affected - the whole Thing (the default) or a single Feature of the Thing (Feature).
 // Note: Only one communication type can be configured to the live message - if using the methods for configuring it - only the last one applies.
-// Note: Only one entity that the message targts can be configured to the live message - if using the methods for configuring it - only the last one applies.
+// Note: Only one entity that the message targets can be configured to the live message - if using the methods for configuring it - only the last one applies.
 type Message struct {
 	Topic                *protocol.Topic
 	Subject              string
@@ -81,7 +82,7 @@ func (msg *Message) Feature(featureID string) *Message {
 	return msg
 }
 
-// Envelope generates the Ditto message applying all configurations and optionally all Headers provided.
+// Envelope generates the Ditto envelope with message's data applying all configurations and optionally all Headers provided.
 func (msg *Message) Envelope(headerOpts ...protocol.HeaderOpt) *protocol.Envelope {
 	res := &protocol.Envelope{
 		Topic: msg.Topic,
