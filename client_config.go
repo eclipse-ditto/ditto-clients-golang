@@ -17,8 +17,12 @@ import (
 )
 
 const (
-	defaultDisconnectTimeout = 250 * time.Millisecond
-	defaultKeepAlive         = 30 * time.Second
+	defaultDisconnectTimeout  = 250 * time.Millisecond
+	defaultKeepAlive          = 30 * time.Second
+	defaultConnectTimeout     = 30 * time.Second
+	defaultAcknowledgeTimeout = 15 * time.Second
+	defaultSubscribeTimeout   = 15 * time.Second
+	defaultUnsubscribeTimeout = 5 * time.Second
 )
 
 // ConnectHandler is called when a successful connection to the configured Ditto endpoint is established and
@@ -39,6 +43,10 @@ type Configuration struct {
 	broker                string
 	keepAlive             time.Duration
 	disconnectTimeout     time.Duration
+	connectTimeout        time.Duration
+	acknowledgeTimeout    time.Duration
+	subscribeTimeout      time.Duration
+	unsubscribeTimeout    time.Duration
 	connectHandler        ConnectHandler
 	connectionLostHandler ConnectionLostHandler
 	tlsConfig             *tls.Config
@@ -48,8 +56,12 @@ type Configuration struct {
 // NewConfiguration creates a new Configuration instance.
 func NewConfiguration() *Configuration {
 	return &Configuration{
-		keepAlive:         defaultKeepAlive,
-		disconnectTimeout: defaultDisconnectTimeout,
+		keepAlive:          defaultKeepAlive,
+		disconnectTimeout:  defaultDisconnectTimeout,
+		connectTimeout:     defaultConnectTimeout,
+		acknowledgeTimeout: defaultAcknowledgeTimeout,
+		subscribeTimeout:   defaultSubscribeTimeout,
+		unsubscribeTimeout: defaultUnsubscribeTimeout,
 	}
 }
 
@@ -68,6 +80,30 @@ func (cfg *Configuration) KeepAlive() time.Duration {
 // The default is 250 milliseconds.
 func (cfg *Configuration) DisconnectTimeout() time.Duration {
 	return cfg.disconnectTimeout
+}
+
+// ConnectTimeout provides the timeout for connecting the client.
+// The default is 30 seconds.
+func (cfg *Configuration) ConnectTimeout() time.Duration {
+	return cfg.connectTimeout
+}
+
+// AcknowledgeTimeout provides the timeout to wait for confirmation that a MQTT message is delivered to the broker.
+// The default is 15 seconds.
+func (cfg *Configuration) AcknowledgeTimeout() time.Duration {
+	return cfg.acknowledgeTimeout
+}
+
+// SubscribeTimeout provides the timeout to wait for successful MQTT subscription.
+// The default is 15 seconds.
+func (cfg *Configuration) SubscribeTimeout() time.Duration {
+	return cfg.subscribeTimeout
+}
+
+// UnsubscribeTimeout provides the timeout to wait for successful MQTT unsubscription.
+// The default is 5 seconds.
+func (cfg *Configuration) UnsubscribeTimeout() time.Duration {
+	return cfg.unsubscribeTimeout
 }
 
 // Credentials provides the currently configured authentication credentials used for the underlying connection.
@@ -105,6 +141,30 @@ func (cfg *Configuration) WithKeepAlive(keepAlive time.Duration) *Configuration 
 // WithDisconnectTimeout configures the timeout for disconnection of the Client.
 func (cfg *Configuration) WithDisconnectTimeout(disconnectTimeout time.Duration) *Configuration {
 	cfg.disconnectTimeout = disconnectTimeout
+	return cfg
+}
+
+// WithConnectTimeout configures the timeout for connection of the Client.
+func (cfg *Configuration) WithConnectTimeout(connectTimeout time.Duration) *Configuration {
+	cfg.connectTimeout = connectTimeout
+	return cfg
+}
+
+// WithAcknowledgeTimeout configures the timeout for acknowledgement of the Client.
+func (cfg *Configuration) WithAcknowledgeTimeout(acknowledgeTimeout time.Duration) *Configuration {
+	cfg.acknowledgeTimeout = acknowledgeTimeout
+	return cfg
+}
+
+// WithSubscribeTimeout configures the timeout for subscription of the Client.
+func (cfg *Configuration) WithSubscribeTimeout(subscribeTimeout time.Duration) *Configuration {
+	cfg.subscribeTimeout = subscribeTimeout
+	return cfg
+}
+
+// WithUnsubscribeTimeout configures the timeout for unsubscription of the Client.
+func (cfg *Configuration) WithUnsubscribeTimeout(unsubscribeTimeout time.Duration) *Configuration {
+	cfg.unsubscribeTimeout = unsubscribeTimeout
 	return cfg
 }
 

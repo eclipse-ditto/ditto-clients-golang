@@ -22,8 +22,12 @@ import (
 
 func TestNewConfiguration(t *testing.T) {
 	want := &Configuration{
-		keepAlive:         defaultKeepAlive,
-		disconnectTimeout: defaultDisconnectTimeout,
+		keepAlive:          defaultKeepAlive,
+		disconnectTimeout:  defaultDisconnectTimeout,
+		connectTimeout:     defaultConnectTimeout,
+		acknowledgeTimeout: defaultAcknowledgeTimeout,
+		subscribeTimeout:   defaultSubscribeTimeout,
+		unsubscribeTimeout: defaultUnsubscribeTimeout,
 	}
 
 	got := NewConfiguration()
@@ -50,6 +54,121 @@ func TestBroker(t *testing.T) {
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			got := testCase.testConfiguration.Broker()
+			internal.AssertEqual(t, testCase.want, got)
+		})
+	}
+}
+func TestConnectTimeout(t *testing.T) {
+	tests := map[string]struct {
+		testConfiguration *Configuration
+		want              time.Duration
+	}{
+		"test_default_connect_timeout": {
+			testConfiguration: NewConfiguration(),
+			want:              defaultConnectTimeout,
+		},
+		"test_any_connect_timeout": {
+			testConfiguration: &Configuration{
+				connectTimeout: 30,
+			},
+			want: 30,
+		},
+		"test_empty_connect_timeout": {
+			testConfiguration: &Configuration{},
+			want:              0,
+		},
+	}
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testConfiguration.ConnectTimeout()
+			internal.AssertEqual(t, testCase.want, got)
+		})
+	}
+}
+
+func TestAcknowledgeTimeout(t *testing.T) {
+	tests := map[string]struct {
+		testConfiguration *Configuration
+		want              time.Duration
+	}{
+		"test_default_acknowledge_timeout": {
+			testConfiguration: NewConfiguration(),
+			want:              defaultAcknowledgeTimeout,
+		},
+		"test_any_acknowledge_timeout": {
+			testConfiguration: &Configuration{
+				acknowledgeTimeout: 30,
+			},
+			want: 30,
+		},
+		"test_empty_acknowledge_timeout": {
+			testConfiguration: &Configuration{},
+			want:              0,
+		},
+	}
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testConfiguration.AcknowledgeTimeout()
+			internal.AssertEqual(t, testCase.want, got)
+		})
+	}
+}
+
+func TestSubscribeTimeout(t *testing.T) {
+	tests := map[string]struct {
+		testConfiguration *Configuration
+		want              time.Duration
+	}{
+		"test_default_subscribe_timeout": {
+			testConfiguration: NewConfiguration(),
+			want:              defaultSubscribeTimeout,
+		},
+		"test_any_subscribe_timeout": {
+			testConfiguration: &Configuration{
+				subscribeTimeout: 30,
+			},
+			want: 30,
+		},
+		"test_empty_subscribe_timeout": {
+			testConfiguration: &Configuration{},
+			want:              0,
+		},
+	}
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testConfiguration.SubscribeTimeout()
+			internal.AssertEqual(t, testCase.want, got)
+		})
+	}
+}
+
+func TestUnsubscribeTimeout(t *testing.T) {
+	tests := map[string]struct {
+		testConfiguration *Configuration
+		want              time.Duration
+	}{
+		"test_default_unsubscribe_timeout": {
+			testConfiguration: NewConfiguration(),
+			want:              defaultUnsubscribeTimeout,
+		},
+		"test_any_unsubscribe_timeout": {
+			testConfiguration: &Configuration{
+				unsubscribeTimeout: 30,
+			},
+			want: 30,
+		},
+		"test_empty_unsubscribe_timeout": {
+			testConfiguration: &Configuration{},
+			want:              0,
+		},
+	}
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testConfiguration.UnsubscribeTimeout()
 			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
@@ -274,6 +393,58 @@ func TestWithBroker(t *testing.T) {
 	}
 
 	got := testConfiguration.WithBroker(arg)
+	internal.AssertEqual(t, want, got)
+}
+
+func TestWithConnectTimeout(t *testing.T) {
+	arg := time.Second
+
+	testConfiguration := &Configuration{}
+
+	want := &Configuration{
+		connectTimeout: arg,
+	}
+
+	got := testConfiguration.WithConnectTimeout(arg)
+	internal.AssertEqual(t, want, got)
+}
+
+func TestWithAcknowledgeTimeout(t *testing.T) {
+	arg := time.Second
+
+	testConfiguration := &Configuration{}
+
+	want := &Configuration{
+		acknowledgeTimeout: arg,
+	}
+
+	got := testConfiguration.WithAcknowledgeTimeout(arg)
+	internal.AssertEqual(t, want, got)
+}
+
+func TestWithSubscribeTimeout(t *testing.T) {
+	arg := time.Second
+
+	testConfiguration := &Configuration{}
+
+	want := &Configuration{
+		subscribeTimeout: arg,
+	}
+
+	got := testConfiguration.WithSubscribeTimeout(arg)
+	internal.AssertEqual(t, want, got)
+}
+
+func TestWithUnsubscribeTimeout(t *testing.T) {
+	arg := time.Second
+
+	testConfiguration := &Configuration{}
+
+	want := &Configuration{
+		unsubscribeTimeout: arg,
+	}
+
+	got := testConfiguration.WithUnsubscribeTimeout(arg)
 	internal.AssertEqual(t, want, got)
 }
 

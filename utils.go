@@ -64,6 +64,8 @@ func validateConfiguration(cfg *Configuration) error {
 		return errors.New("disconnectTimeout is not expected when using external MQTT client")
 	} else if cfg.keepAlive != defaultKeepAlive && cfg.keepAlive != 0 {
 		return errors.New("keepAlive is not expected when using external MQTT client")
+	} else if cfg.connectTimeout != defaultConnectTimeout && cfg.connectTimeout != 0 {
+		return errors.New("connectTimeout is not expected when using external MQTT client")
 	} else if cfg.tlsConfig != nil {
 		return errors.New("TLS configuration is not expected when using external MQTT client")
 	}

@@ -19,6 +19,15 @@ import (
 	"sync"
 )
 
+var (
+	// ErrAcknowledgeTimeout is an error that acknowledgement is not received within the timeout.
+	ErrAcknowledgeTimeout = errors.New("acknowledge timeout")
+	// ErrSubscribeTimeout is an error that subscription confirmation is not received within the timeout.
+	ErrSubscribeTimeout = errors.New("subscribe timeout")
+	// ErrUnsubscribeTimeout is an error that unsubscription confirmation is not received within the timeout.
+	ErrUnsubscribeTimeout = errors.New("unsubscribe timeout")
+)
+
 // Handler represents a callback handler that is called on each received message.
 // If the underlying transport (e.g. Hono) provides a special requestID related to the Envelope,
 // it's also provided to the handler so that chained responses to the ID can be later sent properly.
@@ -51,8 +60,9 @@ func NewClient(cfg *Configuration) *Client {
 // It is expected that the provided MQTT client is already connected. So this Client must be controlled
 // from outside and its Connect/Disconnect methods must be invoked accordingly.
 //
-// If a Configuration is provided it may include only ConnectHandler and ConnectionLostHandler.
-// As an external MQTT client is used, other fields are not needed and regarded as invalid ones.
+// If a Configuration is provided it may include ConnectHandler and ConnectionLostHandler, as well as acknowledge,
+// subscribe and unsubscribe timeout. As an external MQTT client is used, other fields are not needed and
+// regarded as invalid ones.
 //
 // Returns an error if the provided MQTT client is not connected or the Configuration contains invalid fields.
 func NewClientMQTT(mqttClient MQTT.Client, cfg *Configuration) (*Client, error) {
@@ -85,10 +95,16 @@ func NewClientMQTT(mqttClient MQTT.Client, cfg *Configuration) (*Client, error) 
 func (client *Client) Connect() error {
 	if client.externalMQTTClient {
 		client.wgConnectHandler.Add(1)
-		if token := client.pahoClient.Subscribe(honoMQTTTopicSubscribeCommands, 1, client.honoMessageHandler); token.Wait() && token.Error() != nil {
+
+		token := client.pahoClient.Subscribe(honoMQTTTopicSubscribeCommands, 1, client.honoMessageHandler)
+		if !token.WaitTimeout(client.cfg.subscribeTimeout) || token.Error() != nil {
 			client.wgConnectHandler.Done()
-			return token.Error()
+			if err := token.Error(); err != nil {
+				return err
+			}
+			return ErrSubscribeTimeout
 		}
+
 		go client.notifyClientConnected()
 		return nil
 	}
@@ -102,7 +118,8 @@ func (client *Client) Connect() error {
 		SetAutoReconnect(true).
 		SetOnConnectHandler(client.clientConnectHandler).
 		SetConnectionLostHandler(client.clientConnectionLostHandler).
-		SetTLSConfig(client.cfg.tlsConfig)
+		SetTLSConfig(client.cfg.tlsConfig).
+		SetConnectTimeout(client.cfg.connectTimeout)
 
 	if client.cfg.credentials != nil {
 		pahoOpts = pahoOpts.SetCredentialsProvider(func() (username string, password string) {
@@ -123,12 +140,20 @@ func (client *Client) Connect() error {
 // the client from the configured Ditto endpoint. A call to Disconnect will cause a ConnectionLostHandler to be notified
 // only if an external MQTT client is used.
 func (client *Client) Disconnect() {
-	if token := client.pahoClient.Unsubscribe(honoMQTTTopicSubscribeCommands); token.Wait() && token.Error() != nil {
-		if client.externalMQTTClient && token.Error() == MQTT.ErrNotConnected {
-			go client.notifyClientConnectionLost(token.Error()) // expected: external MQTT client has already been disconnected
+	var err error
+	token := client.pahoClient.Unsubscribe(honoMQTTTopicSubscribeCommands)
+	if token.WaitTimeout(client.cfg.unsubscribeTimeout) {
+		err = token.Error()
+		if client.externalMQTTClient && err == MQTT.ErrNotConnected {
+			go client.notifyClientConnectionLost(err) // expected: external MQTT client has already been disconnected
 			return
 		}
-		ERROR.Printf("error while disconnecting client: %v", token.Error())
+	} else {
+		err = ErrUnsubscribeTimeout
+	}
+
+	if err != nil {
+		ERROR.Printf("error while disconnecting client: %v", err)
 	}
 
 	if client.externalMQTTClient { // do not disconnect when external MQTT client, the connection should be managed only externally
