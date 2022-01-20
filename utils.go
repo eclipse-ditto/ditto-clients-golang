@@ -12,13 +12,15 @@
 package ditto
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/eclipse/ditto-clients-golang/protocol"
 	"reflect"
 	"regexp"
 	"runtime"
+
+	"github.com/eclipse/ditto-clients-golang/protocol"
 )
 
 var regexHonoMQTTTopicRequest, _ = regexp.Compile("^command///req/([^/]+)/([^/]+)$")
@@ -70,4 +72,22 @@ func validateConfiguration(cfg *Configuration) error {
 		return errors.New("TLS configuration is not expected when using external MQTT client")
 	}
 	return nil
+}
+
+func supportedCipherSuites() []uint16 {
+	cs := tls.CipherSuites()
+	cid := make([]uint16, len(cs))
+	for i := range cs {
+		cid[i] = cs[i].ID
+	}
+	return cid
+}
+
+func initCipherSutesMinVersion(tlsConfig *tls.Config) {
+	if tlsConfig.CipherSuites == nil || len(tlsConfig.CipherSuites) == 0 {
+		tlsConfig.CipherSuites = supportedCipherSuites()
+	}
+	if tlsConfig.MinVersion == 0 {
+		tlsConfig.MinVersion = tls.VersionTLS12
+	}
 }
