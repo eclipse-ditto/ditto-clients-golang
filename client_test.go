@@ -151,10 +151,19 @@ func TestConnect(t *testing.T) {
 		},
 		"test_external_mqtt_client_error": {
 			client: &Client{
+				cfg:                &Configuration{},
 				pahoClient:         mockMQTTClient,
 				externalMQTTClient: true,
 			},
 			mockExec: mockExecConnectError,
+		},
+		"test_external_mqtt_client_timeout_error": {
+			client: &Client{
+				cfg:                &Configuration{},
+				pahoClient:         mockMQTTClient,
+				externalMQTTClient: true,
+			},
+			mockExec: mockExecConnectTimeoutError,
 		},
 	}
 
@@ -183,7 +192,7 @@ func TestDisconnectInternalClient(t *testing.T) {
 	}
 
 	mockMQTTClient.EXPECT().Unsubscribe(honoMQTTTopicSubscribeCommands).Return(mockToken)
-	mockToken.EXPECT().Wait().Return(false)
+	mockToken.EXPECT().WaitTimeout(time.Duration(0)).Return(false)
 	mockMQTTClient.EXPECT().Disconnect(uint(client.cfg.disconnectTimeout.Milliseconds())).Times(1)
 
 	client.Disconnect()
@@ -250,6 +259,7 @@ func TestReply(t *testing.T) {
 	setup(mockCtrl)
 
 	client := &Client{
+		cfg:        &Configuration{},
 		pahoClient: mockMQTTClient,
 	}
 
@@ -258,15 +268,20 @@ func TestReply(t *testing.T) {
 		arg2          *protocol.Envelope
 		mockExecution mockExecPublish
 	}{
-		"test_send_without_error": {
+		"test_reply_without_error": {
 			arg:           "testRequestID",
 			arg2:          &protocol.Envelope{},
 			mockExecution: mockExecPublishNoErrors,
 		},
-		"test_send_token_error": {
+		"test_reply_token_error": {
 			arg:           "testRequestID",
 			arg2:          &protocol.Envelope{},
 			mockExecution: mockExecPublishErrors,
+		},
+		"test_reply_timeout_error": {
+			arg:           "testRequestID",
+			arg2:          &protocol.Envelope{},
+			mockExecution: mockExecPublishTimeoutErrors,
 		},
 	}
 
@@ -288,6 +303,7 @@ func TestSend(t *testing.T) {
 	setup(mockCtrl)
 
 	client := &Client{
+		cfg:        &Configuration{},
 		pahoClient: mockMQTTClient,
 	}
 
@@ -302,6 +318,10 @@ func TestSend(t *testing.T) {
 		"test_send_token_error": {
 			arg:           &protocol.Envelope{},
 			mockExecution: mockExecPublishErrors,
+		},
+		"test_send_timeout_error": {
+			arg:           &protocol.Envelope{},
+			mockExecution: mockExecPublishTimeoutErrors,
 		},
 	}
 
@@ -470,30 +490,38 @@ func mockExecNewClientMQTTConfigurationError(mockMQTTClient *mock.MockClient, co
 
 // MQTTClientPublish -------------------------------------------------------------
 func mockExecPublishNoErrors(topic string, payload interface{}) error {
-	mockToken.EXPECT().Wait().Return(false)
 	mockMQTTClient.EXPECT().Publish(topic, byte(1), false, payload).Return(mockToken)
+	mockToken.EXPECT().WaitTimeout(gomock.Any()).Return(true)
+	mockToken.EXPECT().Error().Return(nil)
 	return nil
 }
 
 func mockExecPublishErrors(topic string, payload interface{}) error {
 	err := MQTT.ErrNotConnected
-	mockToken.EXPECT().Wait().Return(true)
-	mockToken.EXPECT().Error().AnyTimes().Return(err)
 	mockMQTTClient.EXPECT().Publish(topic, byte(1), false, payload).Return(mockToken)
+	mockToken.EXPECT().WaitTimeout(gomock.Any()).Return(true)
+	mockToken.EXPECT().Error().Return(err)
 	return err
+}
+
+func mockExecPublishTimeoutErrors(topic string, payload interface{}) error {
+	mockMQTTClient.EXPECT().Publish(topic, byte(1), false, payload).Return(mockToken)
+	mockToken.EXPECT().WaitTimeout(gomock.Any()).Return(false)
+	return ErrAcknowledgeTimeout
 }
 
 // MQTTClientDisconnect -------------------------------------------------------------
 func mockExecUnsubscribeNoError(client *Client, _ error) {
 	mockMQTTClient.EXPECT().Unsubscribe(honoMQTTTopicSubscribeCommands).Return(mockToken)
-	mockToken.EXPECT().Wait().Return(false)
+	mockToken.EXPECT().WaitTimeout(gomock.Any()).Return(true)
+	mockToken.EXPECT().Error().Return(nil)
 	mockMQTTClient.EXPECT().Disconnect(uint(client.cfg.disconnectTimeout.Milliseconds())).Times(0)
 }
 
 func mockExecUnsubscribeError(client *Client, err error) {
 	mockMQTTClient.EXPECT().Unsubscribe(honoMQTTTopicSubscribeCommands).Return(mockToken)
-	mockToken.EXPECT().Wait().Return(true)
-	mockToken.EXPECT().Error().AnyTimes().Return(err)
+	mockToken.EXPECT().WaitTimeout(gomock.Any()).Return(true)
+	mockToken.EXPECT().Error().Return(err)
 }
 
 // MQTTClientConnect -------------------------------------------------------------
@@ -501,13 +529,21 @@ func mockExecConnectNoError(testWg *sync.WaitGroup) error {
 	testWg.Add(1)
 	var qos byte = 1
 	mockMQTTClient.EXPECT().Subscribe(honoMQTTTopicSubscribeCommands, qos, gomock.Any()).Return(mockToken)
-	mockToken.EXPECT().Wait().Return(false)
+	mockToken.EXPECT().WaitTimeout(gomock.Any()).Return(true)
+	mockToken.EXPECT().Error().Return(nil)
 	return nil
 }
 
 func mockExecConnectError(testWg *sync.WaitGroup) error {
 	mockMQTTClient.EXPECT().Subscribe(honoMQTTTopicSubscribeCommands, byte(1), gomock.Any()).Return(mockToken)
-	mockToken.EXPECT().Wait().Return(true)
-	mockToken.EXPECT().Error().AnyTimes().Return(MQTT.ErrNotConnected)
+	mockToken.EXPECT().WaitTimeout(gomock.Any()).Return(true)
+	mockToken.EXPECT().Error().Times(2).Return(MQTT.ErrNotConnected)
 	return MQTT.ErrNotConnected
+}
+
+func mockExecConnectTimeoutError(testWg *sync.WaitGroup) error {
+	mockMQTTClient.EXPECT().Subscribe(honoMQTTTopicSubscribeCommands, byte(1), gomock.Any()).Return(mockToken)
+	mockToken.EXPECT().WaitTimeout(gomock.Any()).Return(false)
+	mockToken.EXPECT().Error().Return(nil)
+	return ErrSubscribeTimeout
 }

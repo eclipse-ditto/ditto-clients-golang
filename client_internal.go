@@ -30,8 +30,17 @@ const (
 
 func (client *Client) clientConnectHandler(pahoClient MQTT.Client) {
 	client.wgConnectHandler.Add(1)
-	if token := client.pahoClient.Subscribe(honoMQTTTopicSubscribeCommands, 1, client.honoMessageHandler); token.Wait() && token.Error() != nil {
-		ERROR.Printf("error subscribing to root Hono topic %s : %v", honoMQTTTopicSubscribeCommands, token.Error())
+	token := client.pahoClient.Subscribe(honoMQTTTopicSubscribeCommands, 1, client.honoMessageHandler)
+
+	var err error
+	if token.WaitTimeout(client.cfg.subscribeTimeout) {
+		err = token.Error()
+	} else {
+		err = ErrSubscribeTimeout
+	}
+
+	if err != nil {
+		ERROR.Printf("error subscribing to root Hono topic %s : %v", honoMQTTTopicSubscribeCommands, err)
 	}
 	client.notifyClientConnected()
 }
@@ -94,8 +103,9 @@ func (client *Client) publish(topic string, message *protocol.Envelope, qos byte
 	if err != nil {
 		return err
 	}
-	if token := client.pahoClient.Publish(topic, qos, retained, payload); token.Wait() && token.Error() != nil {
-		return token.Error()
+	token := client.pahoClient.Publish(topic, qos, retained, payload)
+	if !token.WaitTimeout(client.cfg.acknowledgeTimeout) {
+		return ErrAcknowledgeTimeout
 	}
-	return nil
+	return token.Error()
 }
