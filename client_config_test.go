@@ -519,14 +519,63 @@ func TestWithConnectionLostHandler(t *testing.T) {
 }
 
 func TestWithTLSConfig(t *testing.T) {
-	arg := &tls.Config{}
-
-	testConfiguration := &Configuration{}
-
-	want := &Configuration{
-		tlsConfig: arg,
+	tests := map[string]struct {
+		arg  *tls.Config
+		want *Configuration
+	}{
+		"test_empty_tls_config": {
+			arg: &tls.Config{},
+			want: &Configuration{
+				tlsConfig: &tls.Config{
+					CipherSuites: supportedCipherSuites(),
+					MinVersion:   tls.VersionTLS12,
+				},
+			},
+		},
+		"test_empty_cipher_suites_empty_min_version": {
+			arg: &tls.Config{
+				CipherSuites: []uint16{},
+			},
+			want: &Configuration{
+				tlsConfig: &tls.Config{
+					CipherSuites: supportedCipherSuites(),
+					MinVersion:   tls.VersionTLS12,
+				},
+			},
+		},
+		"test_non_empty_cipher_suites_empty_min_version": {
+			arg: &tls.Config{
+				CipherSuites: []uint16{
+					tls.TLS_CHACHA20_POLY1305_SHA256,
+				},
+			},
+			want: &Configuration{
+				tlsConfig: &tls.Config{
+					CipherSuites: []uint16{
+						tls.TLS_CHACHA20_POLY1305_SHA256,
+					},
+					MinVersion: tls.VersionTLS12,
+				},
+			},
+		},
+		"test_empty_cipher_suites_non_empthy_min_version": {
+			arg: &tls.Config{
+				MinVersion: tls.VersionTLS13,
+			},
+			want: &Configuration{
+				tlsConfig: &tls.Config{
+					CipherSuites: supportedCipherSuites(),
+					MinVersion:   tls.VersionTLS13,
+				},
+			},
+		},
 	}
 
-	got := testConfiguration.WithTLSConfig(arg)
-	internal.AssertEqual(t, want, got)
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			testConfiguration := &Configuration{}
+			got := testConfiguration.WithTLSConfig(testCase.arg)
+			internal.AssertEqual(t, testCase.want, got)
+		})
+	}
 }

@@ -13,10 +13,11 @@ package ditto
 
 import (
 	"errors"
+	"sync"
+
 	"github.com/eclipse/ditto-clients-golang/protocol"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 	"github.com/google/uuid"
-	"sync"
 )
 
 var (
@@ -47,6 +48,10 @@ type Client struct {
 
 // NewClient creates a new Client instance with the provided Configuration.
 func NewClient(cfg *Configuration) *Client {
+	if cfg.tlsConfig != nil {
+		initCipherSutesMinVersion(cfg.tlsConfig)
+	}
+
 	client := &Client{
 		cfg:      cfg,
 		handlers: map[string]Handler{},

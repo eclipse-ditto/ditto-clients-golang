@@ -38,15 +38,98 @@ func setup(controller *gomock.Controller) {
 }
 
 func TestNewClient(t *testing.T) {
-	config := &Configuration{}
-
-	want := &Client{
-		cfg:      config,
-		handlers: map[string]Handler{},
+	tests := map[string]struct {
+		arg  *Configuration
+		want *Client
+	}{
+		"test_new_client_empty_configuration": {
+			arg: &Configuration{},
+			want: &Client{
+				cfg:      &Configuration{},
+				handlers: map[string]Handler{},
+			},
+		},
+		"test_new_client_empty_tls_config": {
+			arg: &Configuration{
+				tlsConfig: &tls.Config{},
+			},
+			want: &Client{
+				cfg: &Configuration{
+					tlsConfig: &tls.Config{
+						CipherSuites: supportedCipherSuites(),
+						MinVersion:   tls.VersionTLS12,
+					},
+				},
+				handlers: map[string]Handler{},
+			},
+		},
+		"test_new_client_non_empty_cipher_suites_empty_min_version": {
+			arg: &Configuration{
+				tlsConfig: &tls.Config{
+					CipherSuites: []uint16{
+						tls.TLS_CHACHA20_POLY1305_SHA256,
+						tls.TLS_AES_256_GCM_SHA384,
+					},
+				},
+			},
+			want: &Client{
+				cfg: &Configuration{
+					tlsConfig: &tls.Config{
+						CipherSuites: []uint16{
+							tls.TLS_CHACHA20_POLY1305_SHA256,
+							tls.TLS_AES_256_GCM_SHA384,
+						},
+						MinVersion: tls.VersionTLS12,
+					},
+				},
+				handlers: map[string]Handler{},
+			},
+		},
+		"test_new_client_empty_cipher_suites_non_empty_min_version": {
+			arg: &Configuration{
+				tlsConfig: &tls.Config{
+					MinVersion: tls.VersionTLS13,
+				},
+			},
+			want: &Client{
+				cfg: &Configuration{
+					tlsConfig: &tls.Config{
+						CipherSuites: supportedCipherSuites(),
+						MinVersion:   tls.VersionTLS13,
+					},
+				},
+				handlers: map[string]Handler{},
+			},
+		},
+		"test_new_client_non_empty_cipher_suites_non_empty_min_version": {
+			arg: &Configuration{
+				tlsConfig: &tls.Config{
+					CipherSuites: []uint16{
+						tls.TLS_AES_256_GCM_SHA384,
+					},
+					MinVersion: tls.VersionTLS13,
+				},
+			},
+			want: &Client{
+				cfg: &Configuration{
+					tlsConfig: &tls.Config{
+						CipherSuites: []uint16{
+							tls.TLS_AES_256_GCM_SHA384,
+						},
+						MinVersion: tls.VersionTLS13,
+					},
+				},
+				handlers: map[string]Handler{},
+			},
+		},
 	}
 
-	got := NewClient(config)
-	internal.AssertEqual(t, want, got)
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewClient(testCase.arg)
+			internal.AssertEqual(t, testCase.want, got)
+		})
+	}
 }
 
 type mockExecNewClientMQTT func(mockMQTTClient *mock.MockClient, config *Configuration, message string) (*Client, error)

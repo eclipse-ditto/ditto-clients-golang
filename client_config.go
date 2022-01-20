@@ -189,5 +189,6 @@ func (cfg *Configuration) WithConnectionLostHandler(connectionLostHandler Connec
 // WithTLSConfig sets the TLS configuration to be used by the Client's underlying connection.
 func (cfg *Configuration) WithTLSConfig(tlsConfig *tls.Config) *Configuration {
 	cfg.tlsConfig = tlsConfig
+	initCipherSutesMinVersion(cfg.tlsConfig)
 	return cfg
 }
