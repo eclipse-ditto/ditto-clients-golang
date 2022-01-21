@@ -24,14 +24,31 @@ func applyOptsHeader(headers *Headers, opts ...HeaderOpt) error {
 	return nil
 }
 
-// NewHeaders returns a new Headers instance.
-func NewHeaders(opts ...HeaderOpt) *Headers {
+func applyHeaderValues(values map[string]interface{}, opts ...HeaderOpt) *Headers {
 	res := &Headers{}
-	res.Values = make(map[string]interface{})
+	if values != nil {
+		res.Values = values
+	} else {
+		res.Values = make(map[string]interface{})
+	}
 	if err := applyOptsHeader(res, opts...); err != nil {
 		return nil
 	}
 	return res
+}
+
+// NewHeaders returns a new Headers instance.
+func NewHeaders(opts ...HeaderOpt) *Headers {
+	return applyHeaderValues(nil, opts...)
+}
+
+// NewHeadersFrom returns a new Headers instance using the provided header.
+func NewHeadersFrom(orig *Headers, opts ...HeaderOpt) *Headers {
+	if orig == nil {
+		return NewHeaders(opts...)
+	}
+	return applyHeaderValues(orig.Values, opts...)
+
 }
 
 // WithCorrelationID sets the 'correlation-id' header value.
