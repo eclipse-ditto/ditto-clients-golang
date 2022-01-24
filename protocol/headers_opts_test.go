@@ -14,6 +14,7 @@ package protocol
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/eclipse/ditto-clients-golang/internal"
 )
@@ -270,12 +271,46 @@ func TestWithIfNoneMatch(t *testing.T) {
 }
 
 func TestWithTimeout(t *testing.T) {
-	t.Run("TestWithTimeout", func(t *testing.T) {
-		tmo := "10"
+	tests := map[string]struct {
+		arg  time.Duration
+		want time.Duration
+	}{
+		"test_with_seconds": {
+			arg:  10 * time.Second,
+			want: 10 * time.Second,
+		},
+		"test_with_milliseconds": {
+			arg:  500 * time.Millisecond,
+			want: 500 * time.Millisecond,
+		},
+		"test_with_minute": {
+			arg:  1 * time.Minute,
+			want: time.Minute,
+		},
+		"test_with_zero": {
+			arg:  0,
+			want: 0 * time.Second,
+		},
+		"test_without_unit": {
+			arg:  5,
+			want: 1 * time.Millisecond,
+		},
+		"test_with_invalid_timeout": {
+			arg:  -1,
+			want: 60 * time.Second,
+		},
+		"test_with_1_hour_timeout": {
+			arg:  time.Hour,
+			want: 60 * time.Second,
+		},
+	}
 
-		got := NewHeaders(WithTimeout(tmo))
-		internal.AssertEqual(t, tmo, got.Timeout())
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeaders(WithTimeout(testCase.arg))
+			internal.AssertEqual(t, testCase.want, got.Timeout())
+		})
+	}
 }
 
 func TestWithSchemaVersion(t *testing.T) {

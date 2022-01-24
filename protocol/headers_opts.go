@@ -11,6 +11,11 @@
 
 package protocol
 
+import (
+	"strconv"
+	"time"
+)
+
 // HeaderOpt represents a specific Headers option that can be applied to the Headers instance
 // resulting in changing the value of a specific header of a set of headers.
 type HeaderOpt func(headers *Headers) error
@@ -140,9 +145,41 @@ func WithIfNoneMatch(ifNoneMatch string) HeaderOpt {
 }
 
 // WithTimeout sets the 'timeout' header value.
-func WithTimeout(timeout string) HeaderOpt {
+//
+// The provided value should be a non-negative duration in Millisecond, Second or Minute unit.
+// The change results in timeout header string value containing the duration
+// and the unit symbol (ms, s or m), e.g. '45s' or '250ms' or '1m'.
+//
+// The default value is '60s'.
+// If a negative duration or duration of an hour or more is provided, the timeout header value
+// is removed, i.e. the default one is used.
+func WithTimeout(timeout time.Duration) HeaderOpt {
 	return func(headers *Headers) error {
-		headers.Values[HeaderTimeout] = timeout
+		if inTimeoutRange(timeout) {
+			var value string
+
+			if timeout > time.Second {
+				div := int64(timeout / time.Second)
+				rem := timeout % time.Second
+				if rem == 0 {
+					value = strconv.FormatInt(div, 10)
+				} else {
+					value = strconv.FormatInt(div+1, 10)
+				}
+			} else {
+				div := int64(timeout / time.Millisecond)
+				rem := timeout % time.Millisecond
+				if rem == 0 {
+					value = strconv.FormatInt(div, 10) + "ms"
+				} else {
+					value = strconv.FormatInt(div+1, 10) + "ms"
+				}
+			}
+
+			headers.Values[HeaderTimeout] = value
+		} else {
+			delete(headers.Values, HeaderTimeout)
+		}
 		return nil
 	}
 }
