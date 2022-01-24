@@ -13,7 +13,6 @@ package protocol
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 
 	"github.com/eclipse/ditto-clients-golang/internal"
@@ -58,31 +57,115 @@ func TestApplyOptsHeader(t *testing.T) {
 
 func TestNewHeaders(t *testing.T) {
 	tests := map[string]struct {
-		opts    []HeaderOpt
-		wantErr bool
+		opts []HeaderOpt
+		want *Headers
 	}{
 		"test_new_headers": {
-			opts:    []HeaderOpt{WithChannel("someChannel")},
-			wantErr: false,
+			opts: []HeaderOpt{WithChannel("someChannel")},
+			want: &Headers{
+				Values: map[string]interface{}{
+					HeaderChannel: "someChannel",
+				},
+			},
 		},
 		"test_new_headers_error": {
-			opts:    []HeaderOpt{WithError()},
-			wantErr: true,
+			opts: []HeaderOpt{WithError()},
+			want: nil,
+		},
+		"test_new_headers_without_opts": {
+			opts: nil,
+			want: &Headers{
+				Values: make(map[string]interface{}),
+			},
 		},
 	}
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			res := make(map[string]interface{})
-			res[HeaderChannel] = "someChannel"
-			want := &Headers{res}
 			got := NewHeaders(testCase.opts...)
-			if testCase.wantErr {
-				if got != nil {
-					t.Errorf("NewHeaders() must be nil")
-				}
-			} else if !reflect.DeepEqual(got, want) {
-				t.Errorf("NewHeaders() = %v want %v", got, want)
-			}
+			internal.AssertEqual(t, testCase.want, got)
+		})
+	}
+}
+
+func TestNewHeadersFrom(t *testing.T) {
+	tests := map[string]struct {
+		arg1 *Headers
+		arg2 []HeaderOpt
+		want *Headers
+	}{
+		"test_copy_existing_empty_header_with_new_value": {
+			arg1: &Headers{},
+			arg2: []HeaderOpt{WithCorrelationID("test-correlation-id")},
+			want: &Headers{
+				Values: map[string]interface{}{
+					HeaderCorrelationID: "test-correlation-id",
+				},
+			},
+		},
+		"test_copy_existing_not_empty_haeder_with_new_value": {
+			arg1: &Headers{
+				Values: map[string]interface{}{HeaderCorrelationID: "test-correlation-id"},
+			},
+			arg2: []HeaderOpt{WithContentType("application/json")},
+			want: &Headers{
+				Values: map[string]interface{}{
+					HeaderCorrelationID: "test-correlation-id",
+					HeaderContentType:   "application/json",
+				},
+			},
+		},
+		"test_copy_existing_not_empty_header_nil_value": {
+			arg1: &Headers{
+				Values: map[string]interface{}{HeaderCorrelationID: "test-correlation-id"},
+			},
+			arg2: nil,
+			want: &Headers{
+				Values: map[string]interface{}{HeaderCorrelationID: "test-correlation-id"},
+			},
+		},
+		"test_copy_existing_not_empty_header_empty_value": {
+			arg1: &Headers{
+				Values: map[string]interface{}{HeaderCorrelationID: "test-correlation-id"},
+			},
+			arg2: []HeaderOpt{},
+			want: &Headers{
+				Values: map[string]interface{}{HeaderCorrelationID: "test-correlation-id"},
+			},
+		},
+		"test_copy_existing_empty_header_nil_value": {
+			arg1: &Headers{},
+			arg2: nil,
+			want: &Headers{
+				Values: make(map[string]interface{}),
+			},
+		},
+		"test_copy_nil_header_with_values": {
+			arg1: nil,
+			arg2: []HeaderOpt{WithCorrelationID("correlation-id")},
+			want: &Headers{
+				Values: map[string]interface{}{HeaderCorrelationID: "correlation-id"},
+			},
+		},
+		"test_copy_nil_header_nil_value": {
+			arg1: nil,
+			arg2: nil,
+			want: &Headers{
+				make(map[string]interface{}),
+			},
+		},
+		"test_copy_nil_header_empty_value": {
+			arg1: nil,
+			arg2: []HeaderOpt{},
+			want: &Headers{
+				Values: make(map[string]interface{}),
+			},
+		},
+	}
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.arg1, testCase.arg2...)
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
 }

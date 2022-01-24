@@ -34,6 +34,23 @@ func NewHeaders(opts ...HeaderOpt) *Headers {
 	return res
 }
 
+// NewHeadersFrom returns a new Headers instance using the provided header.
+func NewHeadersFrom(orig *Headers, opts ...HeaderOpt) *Headers {
+	if orig == nil {
+		return NewHeaders(opts...)
+	}
+	res := &Headers{
+		Values: make(map[string]interface{}),
+	}
+	for key, value := range orig.Values {
+		res.Values[key] = value
+	}
+	if err := applyOptsHeader(res, opts...); err != nil {
+		return nil
+	}
+	return res
+}
+
 // WithCorrelationID sets the 'correlation-id' header value.
 func WithCorrelationID(correlationID string) HeaderOpt {
 	return func(headers *Headers) error {
