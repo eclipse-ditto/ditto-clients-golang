@@ -67,7 +67,7 @@ func (h *Headers) CorrelationID() string {
 	return ""
 }
 
-// Timeout returns the 'timeout' header value or empty string if not set.
+// Timeout returns the 'timeout' header value or duration of 60 seconds if not set.
 func (h *Headers) Timeout() time.Duration {
 	if value, ok := h.Values[HeaderTimeout]; ok {
 		if duration, err := parseTimeout(value.(string)); err == nil {
@@ -112,12 +112,12 @@ func inTimeoutRange(timeout time.Duration) bool {
 	return timeout >= 0 && timeout < time.Hour
 }
 
-// IsResponseRequired returns the 'response-required' header value or empty string if not set.
+// IsResponseRequired returns the 'response-required' header value or true if not set.
 func (h *Headers) IsResponseRequired() bool {
 	if value, ok := h.Values[HeaderResponseRequired]; ok && value != nil {
 		return value.(bool)
 	}
-	return false
+	return true
 }
 
 // Channel returns the 'ditto-channel' header value or empty string if not set.
@@ -220,10 +220,17 @@ func (h *Headers) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON unmarshels Headers.
 func (h *Headers) UnmarshalJSON(data []byte) error {
-	var v map[string]interface{}
-	if err := json.Unmarshal(data, &v); err != nil {
+	var m map[string]interface{}
+	if err := json.Unmarshal(data, &m); err != nil {
 		return err
 	}
-	h.Values = v
+
+	if value, ok := m[HeaderTimeout]; ok {
+		if _, err := parseTimeout(value.(string)); err != nil {
+			return err
+		}
+	}
+
+	h.Values = m
 	return nil
 }

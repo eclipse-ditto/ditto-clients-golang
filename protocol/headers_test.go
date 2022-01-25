@@ -12,7 +12,7 @@
 package protocol
 
 import (
-	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -128,8 +128,8 @@ func TestTimeout(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			var headers Headers
-			json.Unmarshal([]byte(testCase.data), &headers)
+			headers := NewHeaders()
+			headers.UnmarshalJSON([]byte(testCase.data))
 			internal.AssertEqual(t, testCase.want, headers.Timeout())
 		})
 	}
@@ -142,19 +142,19 @@ func TestHeadersIsResponseRequired(t *testing.T) {
 	}{
 		"test_with_response_required": {
 			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderResponseRequired: true},
+				Values: map[string]interface{}{HeaderResponseRequired: false},
 			},
-			want: true,
+			want: false,
 		},
 		"test_response_required_value_nil": {
 			testHeader: &Headers{
 				Values: map[string]interface{}{HeaderResponseRequired: nil},
 			},
-			want: false,
+			want: true,
 		},
 		"test_without_response_required": {
 			testHeader: &Headers{},
-			want:       false,
+			want:       true,
 		},
 	}
 
@@ -560,19 +560,49 @@ func TestHeadersMarshalJSON(t *testing.T) {
 }
 
 func TestHeadersUnmarshalJSON(t *testing.T) {
-	ct := "application/json"
-
 	tests := map[string]struct {
 		data    string
-		wantErr bool
+		wantErr error
 	}{
-		"test_headers_unmarshal_JSON_ok": {
-			data:    "{\"content-type\":\"application/json\"}",
-			wantErr: false,
+		"test_headers_unmarshal_JSON_with_one_heder": {
+			data:    `{"content-type":"application/json"}`,
+			wantErr: nil,
+		},
+		"test_headers_unmarshal_JSON_with_many_headers": {
+			data: `{
+				"content-type": "application/json",
+				"response-required": false,
+				"timeout": "30ms"
+			}`,
+			wantErr: nil,
+		},
+		"test_headers_unmarshal_JSON_negative_timeout": {
+			data: `{
+				"timeout": "-30"
+			}`,
+			wantErr: errors.New("invalid timeout '-30'"),
+		},
+		"test_headers_unmarshal_JSON_invalid_timeout": {
+			data: `{
+				"timeout": "1h"
+			}`,
+			wantErr: errors.New("invalid timeout '1h'"),
+		},
+		"test_headers_unmarshal_JSON_empty_timeout": {
+			data: `{
+				"timeout": ""
+			}`,
+			wantErr: errors.New("invalid timeout ''"),
+		},
+		"test_headers_unmarshal_JSON_zero_timeout": {
+			data: `{
+				"timeout": "0"
+			}`,
+			wantErr: nil,
 		},
 		"test_headers_unmarshal_JSON_err": {
 			data:    "",
-			wantErr: true,
+			wantErr: errors.New("unexpected end of JSON input"),
 		},
 	}
 
@@ -580,15 +610,7 @@ func TestHeadersUnmarshalJSON(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			got := NewHeaders()
 			err := got.UnmarshalJSON([]byte(testCase.data))
-			if testCase.wantErr {
-				if err == nil {
-					t.Errorf("Headers.UnmarshalJSON() error must not be nil")
-				}
-			} else {
-				if got.ContentType() != ct {
-					t.Errorf("Headers.UnmarshalJSON() got = %v, want %v", got.ContentType(), ct)
-				}
-			}
+			internal.AssertError(t, testCase.wantErr, err)
 		})
 	}
 }
