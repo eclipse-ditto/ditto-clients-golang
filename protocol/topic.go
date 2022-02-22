@@ -89,7 +89,7 @@ const (
 )
 
 var regexFiveElementTopic = regexp.MustCompile("^([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)$")
-var regexSixElementTopic = regexp.MustCompile("^([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)$")
+var regexSixElementTopic = regexp.MustCompile("^([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/(.*)$")
 
 // Topic represents the Ditto protocol's Topic entity. It's represented in the form of:
 // <namespace>/<entity-name>/<group>/<channel>/<criterion>/<action>.
@@ -157,7 +157,12 @@ func (topic *Topic) UnmarshalJSON(data []byte) error {
 	topic.Criterion = TopicCriterion(elements[index])
 	index++
 	if index < len(elements) {
-		topic.Action = TopicAction(elements[index])
+		if topic.Criterion == CriterionMessages {
+			i := strings.Index(v, elements[index])
+			topic.Action = TopicAction(v[i:])
+		} else {
+			topic.Action = TopicAction(elements[index])
+		}
 	} else {
 		topic.Action = ""
 	}

@@ -151,6 +151,33 @@ func TestTopicUnmarshalJSON(t *testing.T) {
 			wantErr:               true,
 			onlyForUnmarshalError: true,
 		},
+		"test_topic_unmarshal_JSON_set_configuration": {
+			data: "namespace/entity_name/" +
+				string(GroupThings) + "/" +
+				string(ChannelLive) + "/" +
+				string(CriterionMessages) + "/" +
+				"$set.configuration/name",
+			wantErr:               false,
+			onlyForUnmarshalError: false,
+		},
+		"test_topic_unmarshal_JSON_refresh_property": {
+			data: "namespace/entity_name/" +
+				string(GroupThings) + "/" +
+				string(ChannelLive) + "/" +
+				string(CriterionMessages) + "/" +
+				"$refresh.name",
+			wantErr:               false,
+			onlyForUnmarshalError: false,
+		},
+		"test_topic_unmarshal_JSON_refresh_action": {
+			data: "namespace/entity_name/" +
+				string(GroupThings) + "/" +
+				string(ChannelLive) + "/" +
+				string(CriterionMessages) + "/" +
+				"$refresh",
+			wantErr:               false,
+			onlyForUnmarshalError: false,
+		},
 	}
 
 	for testName, testCase := range tests {
