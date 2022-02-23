@@ -88,8 +88,7 @@ const (
 	topicFormatThingsNoAction = "%s/%s/%s/%s/%s"
 )
 
-var regexFiveElementTopic = regexp.MustCompile("^([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)$")
-var regexSixElementTopic = regexp.MustCompile("^([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/(.*)$")
+var regexTopic = regexp.MustCompile("^([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)(/([^/]{1}.*))?$")
 
 // Topic represents the Ditto protocol's Topic entity. It's represented in the form of:
 // <namespace>/<entity-name>/<group>/<channel>/<criterion>/<action>.
@@ -129,17 +128,21 @@ func (topic *Topic) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	if !regexFiveElementTopic.MatchString(v) && !regexSixElementTopic.MatchString(v) {
+	matches := regexTopic.FindAllStringSubmatch(v, -1)
+	if matches == nil {
 		return errors.New("invalid topic: " + v)
 	}
-	elements := strings.Split(v, "/")
-	index := 0
+
+	elements := matches[0]
+	index := 1
 	ns := elements[index]
 	index++
 	name := elements[index]
+
 	if err := validateNamespacedID(ns, name); err != nil {
 		return err
 	}
+
 	topic.Namespace = ns
 	topic.EntityName = name
 	index++
@@ -154,18 +157,15 @@ func (topic *Topic) UnmarshalJSON(data []byte) error {
 		// skip channel - not supported for policies group
 		topic.Channel = ""
 	}
+
 	topic.Criterion = TopicCriterion(elements[index])
 	index++
-	if index < len(elements) {
-		if topic.Criterion == CriterionMessages {
-			i := strings.Index(v, elements[index])
-			topic.Action = TopicAction(v[i:])
-		} else {
-			topic.Action = TopicAction(elements[index])
-		}
-	} else {
-		topic.Action = ""
+
+	if strings.HasPrefix(elements[index], "/") {
+		index++
 	}
+
+	topic.Action = TopicAction(elements[index])
 
 	return nil
 }
