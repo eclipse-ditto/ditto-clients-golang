@@ -16,7 +16,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/eclipse/ditto-clients-golang/model"
 )
@@ -134,10 +133,8 @@ func (topic *Topic) UnmarshalJSON(data []byte) error {
 	}
 
 	elements := matches[0]
-	index := 1
-	ns := elements[index]
-	index++
-	name := elements[index]
+	ns := elements[1]
+	name := elements[2]
 
 	if err := validateNamespacedID(ns, name); err != nil {
 		return err
@@ -145,27 +142,19 @@ func (topic *Topic) UnmarshalJSON(data []byte) error {
 
 	topic.Namespace = ns
 	topic.EntityName = name
-	index++
-	topic.Group = TopicGroup(elements[index])
-	index++
+	topic.Group = TopicGroup(elements[3])
 
 	switch topic.Group {
 	case GroupThings:
-		topic.Channel = TopicChannel(elements[index])
-		index++
+		topic.Channel = TopicChannel(elements[4])
+		topic.Criterion = TopicCriterion(elements[5])
+		topic.Action = TopicAction(elements[7])
 	default:
 		// skip channel - not supported for policies group
 		topic.Channel = ""
+		topic.Criterion = TopicCriterion(elements[4])
+		topic.Action = TopicAction(elements[5])
 	}
-
-	topic.Criterion = TopicCriterion(elements[index])
-	index++
-
-	if strings.HasPrefix(elements[index], "/") {
-		index++
-	}
-
-	topic.Action = TopicAction(elements[index])
 
 	return nil
 }
