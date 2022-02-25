@@ -16,7 +16,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/eclipse/ditto-clients-golang/model"
 )
@@ -88,8 +87,7 @@ const (
 	topicFormatThingsNoAction = "%s/%s/%s/%s/%s"
 )
 
-var regexFiveElementTopic = regexp.MustCompile("^([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)$")
-var regexSixElementTopic = regexp.MustCompile("^([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)$")
+var regexTopic = regexp.MustCompile("^([^/]+)/([^/]+)/(" + string(GroupThings) + "|" + string(GroupPolicies) + ")/([^/]+)/([^/]+)(/([^/]{1}.*))?$")
 
 // Topic represents the Ditto protocol's Topic entity. It's represented in the form of:
 // <namespace>/<entity-name>/<group>/<channel>/<criterion>/<action>.
@@ -120,7 +118,12 @@ func (topic *Topic) String() string {
 
 // MarshalJSON marshals Topic.
 func (topic *Topic) MarshalJSON() ([]byte, error) {
-	return json.Marshal(topic.String())
+	topicStr := topic.String()
+	matches := regexTopic.FindAllStringSubmatch(topicStr, -1)
+	if matches == nil {
+		return nil, errors.New("invalid topic: " + topicStr)
+	}
+	return json.Marshal(topicStr)
 }
 
 // UnmarshalJSON unmarshals Topic.
@@ -129,37 +132,35 @@ func (topic *Topic) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	if !regexFiveElementTopic.MatchString(v) && !regexSixElementTopic.MatchString(v) {
+	matches := regexTopic.FindAllStringSubmatch(v, -1)
+	if matches == nil {
 		return errors.New("invalid topic: " + v)
 	}
-	elements := strings.Split(v, "/")
-	index := 0
-	ns := elements[index]
-	index++
-	name := elements[index]
+
+	elements := matches[0]
+	ns := elements[1]
+	name := elements[2]
+
 	if err := validateNamespacedID(ns, name); err != nil {
 		return err
 	}
+
 	topic.Namespace = ns
 	topic.EntityName = name
-	index++
-	topic.Group = TopicGroup(elements[index])
-	index++
+	topic.Group = TopicGroup(elements[3])
 
 	switch topic.Group {
 	case GroupThings:
-		topic.Channel = TopicChannel(elements[index])
-		index++
-	default:
+		topic.Channel = TopicChannel(elements[4])
+		topic.Criterion = TopicCriterion(elements[5])
+		topic.Action = TopicAction(elements[7])
+	case GroupPolicies:
 		// skip channel - not supported for policies group
 		topic.Channel = ""
-	}
-	topic.Criterion = TopicCriterion(elements[index])
-	index++
-	if index < len(elements) {
-		topic.Action = TopicAction(elements[index])
-	} else {
-		topic.Action = ""
+		topic.Criterion = TopicCriterion(elements[4])
+		topic.Action = TopicAction(elements[5])
+	default:
+		return errors.New("unsupported topic group provided for topic: " + v)
 	}
 
 	return nil
