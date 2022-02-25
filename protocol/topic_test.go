@@ -21,11 +21,11 @@ import (
 
 func TestTopicString(t *testing.T) {
 	tests := map[string]struct {
-		topic Topic
+		topic *Topic
 		want  string
 	}{
 		"test_topic_string_group_things": {
-			topic: Topic{
+			topic: &Topic{
 				Namespace:  "namespace",
 				EntityName: "entity_name",
 				Group:      GroupThings,
@@ -40,7 +40,7 @@ func TestTopicString(t *testing.T) {
 				string(ActionSubscribe),
 		},
 		"test_topic_string_group_policies": {
-			topic: Topic{
+			topic: &Topic{
 				Namespace:  "namespace",
 				EntityName: "entity_name",
 				Group:      GroupPolicies,
@@ -54,7 +54,7 @@ func TestTopicString(t *testing.T) {
 				string(ActionCreate),
 		},
 		"test_topic_string_empty": {
-			topic: Topic{
+			topic: &Topic{
 				Namespace:  "namespace",
 				EntityName: "entity_name",
 				Group:      "",
@@ -75,91 +75,111 @@ func TestTopicString(t *testing.T) {
 }
 
 func TestTopicMarshalJSON(t *testing.T) {
-	t.Run("TestTopicMarshalJSON", func(t *testing.T) {
-		tests := map[string]struct {
-			topic *Topic
-			want  string
-		}{
-			"test_marshalJSON_with_all_entities": {
-				topic: &Topic{
-					Namespace:  "namespace",
-					EntityName: "test",
-					Group:      GroupThings,
-					Channel:    ChannelTwin,
-					Criterion:  CriterionMessages,
-					Action:     ActionSubscribe,
-				},
-				want: `"namespace/test/things/twin/messages/subscribe"`,
-			},
-			"test_marshalJSON_without_namespace": {
-				topic: &Topic{
-					EntityName: "test",
-					Group:      GroupThings,
-					Channel:    ChannelTwin,
-					Criterion:  CriterionMessages,
-					Action:     ActionSubscribe,
-				},
-				want: `"/test/things/twin/messages/subscribe"`,
-			},
-			"test_marshalJSON_without_name": {
-				topic: &Topic{
-					Namespace: "namespace",
-					Group:     GroupThings,
-					Channel:   ChannelTwin,
-					Criterion: CriterionMessages,
-					Action:    ActionSubscribe,
-				},
-				want: `"namespace//things/twin/messages/subscribe"`,
-			},
-			"test_marshalJSON_without_group": {
-				topic: &Topic{
-					Namespace:  "namespace",
-					EntityName: "test",
-					Channel:    ChannelTwin,
-					Criterion:  CriterionMessages,
-					Action:     ActionSubscribe,
-				},
-				want: `""`,
-			},
-			"test_marshalJSON_without_channel": {
-				topic: &Topic{
-					Namespace:  "namespace",
-					EntityName: "test",
-					Group:      GroupThings,
-					Criterion:  CriterionMessages,
-					Action:     ActionSubscribe,
-				},
-				want: `"namespace/test/things//messages/subscribe"`,
-			},
-			"test_marshalJSON_without_creation": {
-				topic: &Topic{
-					Namespace:  "namespace",
-					EntityName: "test",
-					Group:      GroupThings,
-					Channel:    ChannelTwin,
-					Action:     ActionSubscribe,
-				},
-				want: `"namespace/test/things/twin//subscribe"`,
-			},
-			"test_marshalJSON_without_action": {
-				topic: &Topic{
-					Namespace:  "namespace",
-					EntityName: "test",
-					Group:      GroupThings,
-					Channel:    ChannelTwin,
-					Criterion:  CriterionMessages,
-				},
-				want: `"namespace/test/things/twin/messages"`,
-			},
-		}
 
-		for testName, testCase := range tests {
-			t.Run(testName, func(t *testing.T) {
-				mTopic, _ := testCase.topic.MarshalJSON()
-				internal.AssertEqual(t, testCase.want, string(mTopic))
-			})
-		}
-	})
+	tests := map[string]struct {
+		topic         *Topic
+		want          string
+		expectedError error
+	}{
+		"test_marshalJSON_with_all_entities_things": {
+			topic: &Topic{
+				Namespace:  "namespace",
+				EntityName: "test",
+				Group:      GroupThings,
+				Channel:    ChannelTwin,
+				Criterion:  CriterionMessages,
+				Action:     ActionSubscribe,
+			},
+			want:          `"namespace/test/things/twin/messages/subscribe"`,
+			expectedError: nil,
+		},
+		"test_marshalJSON_with_all_entities_policies": {
+			topic: &Topic{
+				Namespace:  "namespace",
+				EntityName: "test",
+				Group:      GroupPolicies,
+				Criterion:  CriterionCommands,
+				Action:     ActionModify,
+			},
+			want:          `"namespace/test/policies/commands/modify"`,
+			expectedError: nil,
+		},
+		"test_marshalJSON_without_namespace": {
+			topic: &Topic{
+				EntityName: "test",
+				Group:      GroupThings,
+				Channel:    ChannelTwin,
+				Criterion:  CriterionMessages,
+				Action:     ActionSubscribe,
+			},
+			want:          ``,
+			expectedError: errors.New("invalid topic: /test/things/twin/messages/subscribe"),
+		},
+		"test_marshalJSON_without_name": {
+			topic: &Topic{
+				Namespace: "namespace",
+				Group:     GroupThings,
+				Channel:   ChannelTwin,
+				Criterion: CriterionMessages,
+				Action:    ActionSubscribe,
+			},
+			want:          ``,
+			expectedError: errors.New("invalid topic: namespace//things/twin/messages/subscribe"),
+		},
+		"test_marshalJSON_without_group": {
+			topic: &Topic{
+				Namespace:  "namespace",
+				EntityName: "test",
+				Channel:    ChannelTwin,
+				Criterion:  CriterionMessages,
+				Action:     ActionSubscribe,
+			},
+			want:          ``,
+			expectedError: errors.New("invalid topic: "), // for a missing group the string representation of the Topi is ""
+		},
+		"test_marshalJSON_without_channel": {
+			topic: &Topic{
+				Namespace:  "namespace",
+				EntityName: "test",
+				Group:      GroupThings,
+				Criterion:  CriterionMessages,
+				Action:     ActionSubscribe,
+			},
+			want:          ``,
+			expectedError: errors.New("invalid topic: namespace/test/things//messages/subscribe"),
+		},
+		"test_marshalJSON_without_criterion": {
+			topic: &Topic{
+				Namespace:  "namespace",
+				EntityName: "test",
+				Group:      GroupThings,
+				Channel:    ChannelTwin,
+				Action:     ActionSubscribe,
+			},
+			want:          ``,
+			expectedError: errors.New("invalid topic: namespace/test/things/twin//subscribe"),
+		},
+		"test_marshalJSON_without_action": {
+			topic: &Topic{
+				Namespace:  "namespace",
+				EntityName: "test",
+				Group:      GroupThings,
+				Channel:    ChannelTwin,
+				Criterion:  CriterionMessages,
+			},
+			want:          `"namespace/test/things/twin/messages"`,
+			expectedError: nil,
+		},
+	}
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			t.Log(testName)
+			mTopic, mError := testCase.topic.MarshalJSON()
+			internal.AssertEqual(t, testCase.expectedError, mError)
+			internal.AssertEqual(t, testCase.want, string(mTopic))
+		})
+	}
 }
 
 func TestTopicValidUnmarshalJSON(t *testing.T) {
@@ -172,8 +192,9 @@ func TestTopicValidUnmarshalJSON(t *testing.T) {
 		`"namespace/test/things/live/messages/a"`,
 	}
 
-	var topic Topic
+	var topic *Topic
 	for _, test := range tests {
+		topic = &Topic{}
 		topic.UnmarshalJSON([]byte(test))
 		internal.AssertEqual(t, test, fmt.Sprintf("%q", topic.String()))
 	}
@@ -185,11 +206,16 @@ func TestTopicInvalidUnmarshalJSON(t *testing.T) {
 		`"/////"`,
 		`"namespace/name/"`,
 		`"namespace/name"`,
+		`"namespace/name/things"`,
+		`"namespace/name/things/commands"`,
 		`"namespace/name/things/live/events//create"`,
+		`"namespace/name/random_group/commands/modify"`,
+		`"namespace/name/random_group/live/events/create"`,
 	}
 
-	var topic Topic
+	var topic *Topic
 	for _, test := range tests {
+		topic = &Topic{}
 		err := topic.UnmarshalJSON([]byte(test))
 		fmt.Println(err)
 		internal.AssertNotNil(t, err)
@@ -250,7 +276,7 @@ func TestTopicNamespace(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			topic := Topic{}
+			topic := &Topic{}
 			err := topic.UnmarshalJSON([]byte(testCase.data))
 			internal.AssertError(t, testCase.wantErr, err)
 			internal.AssertEqual(t, testCase.namespace, topic.Namespace)
@@ -262,7 +288,7 @@ func TestTopicNamespace(t *testing.T) {
 func TestTopicWithNamespace(t *testing.T) {
 	t.Run("TestTopicWithNamespace", func(t *testing.T) {
 		arg := "namespace"
-		topic := Topic{
+		topic := &Topic{
 			EntityName: "test",
 			Group:      GroupThings,
 			Channel:    ChannelTwin,
@@ -278,7 +304,7 @@ func TestTopicWithNamespace(t *testing.T) {
 func TestTopicWithEntityName(t *testing.T) {
 	t.Run("TestTopicWithEntityName", func(t *testing.T) {
 		arg := "test"
-		topic := Topic{
+		topic := &Topic{
 			Namespace: "namespace",
 			Group:     GroupThings,
 			Channel:   ChannelTwin,
@@ -294,7 +320,7 @@ func TestTopicWithEntityName(t *testing.T) {
 func TestTopicWithGroup(t *testing.T) {
 	t.Run("TestTopicWithGroup", func(t *testing.T) {
 		arg := GroupThings
-		topic := Topic{
+		topic := &Topic{
 			Namespace:  "namespace",
 			EntityName: "test",
 			Channel:    ChannelTwin,
@@ -310,7 +336,7 @@ func TestTopicWithGroup(t *testing.T) {
 func TestTopicWithChannel(t *testing.T) {
 	t.Run("TestTopicWithChannel", func(t *testing.T) {
 		arg := ChannelTwin
-		topic := Topic{
+		topic := &Topic{
 			Namespace:  "namespace",
 			EntityName: "test",
 			Group:      GroupThings,
@@ -326,7 +352,7 @@ func TestTopicWithChannel(t *testing.T) {
 func TestTopicWithCriterion(t *testing.T) {
 	t.Run("TestTopicWithCriterion", func(t *testing.T) {
 		arg := CriterionCommands
-		topic := Topic{
+		topic := &Topic{
 			Namespace:  "namespace",
 			EntityName: "test",
 			Group:      GroupThings,
@@ -342,7 +368,7 @@ func TestTopicWithCriterion(t *testing.T) {
 func TestTopicWithAction(t *testing.T) {
 	t.Run("TestTopicWithAction", func(t *testing.T) {
 		arg := ActionCreate
-		topic := Topic{
+		topic := &Topic{
 			Namespace:  "namespace",
 			EntityName: "test",
 			Group:      GroupThings,
