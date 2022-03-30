@@ -20,7 +20,7 @@ import (
 )
 
 func WithError() HeaderOpt {
-	return func(headers *Headers) error {
+	return func(headers Headers) error {
 		return errors.New("this is an error example")
 	}
 }
@@ -41,16 +41,15 @@ func TestApplyOptsHeader(t *testing.T) {
 	}
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			res := make(map[string]interface{})
-			res[HeaderChannel] = "somethingBefore"
-			headers := &Headers{res}
+			headers := Headers{HeaderChannel: "somethingBefore"}
+
 			err := applyOptsHeader(headers, testCase.opts...)
 			if testCase.wantErr {
 				if err == nil {
 					t.Errorf("applyOptsHeader() must rise an error")
 				}
-			} else if headers.Values[HeaderChannel] != "somethingNow" {
-				t.Errorf("applyOptsHeader() Header want = \"somethingNow\" got %v", headers.Values[HeaderChannel])
+			} else if headers[HeaderChannel] != "somethingNow" {
+				t.Errorf("applyOptsHeader() Header want = \"somethingNow\" got %v", headers[HeaderChannel])
 			}
 		})
 	}
@@ -59,15 +58,11 @@ func TestApplyOptsHeader(t *testing.T) {
 func TestNewHeaders(t *testing.T) {
 	tests := map[string]struct {
 		opts []HeaderOpt
-		want *Headers
+		want Headers
 	}{
 		"test_new_headers": {
 			opts: []HeaderOpt{WithChannel("someChannel")},
-			want: &Headers{
-				Values: map[string]interface{}{
-					HeaderChannel: "someChannel",
-				},
-			},
+			want: Headers{HeaderChannel: "someChannel"},
 		},
 		"test_new_headers_error": {
 			opts: []HeaderOpt{WithError()},
@@ -75,9 +70,7 @@ func TestNewHeaders(t *testing.T) {
 		},
 		"test_new_headers_without_opts": {
 			opts: nil,
-			want: &Headers{
-				Values: make(map[string]interface{}),
-			},
+			want: Headers{},
 		},
 	}
 	for testName, testCase := range tests {
@@ -90,76 +83,52 @@ func TestNewHeaders(t *testing.T) {
 
 func TestNewHeadersFrom(t *testing.T) {
 	tests := map[string]struct {
-		arg1 *Headers
+		arg1 Headers
 		arg2 []HeaderOpt
-		want *Headers
+		want Headers
 	}{
 		"test_copy_existing_empty_header_with_new_value": {
-			arg1: &Headers{},
+			arg1: Headers{},
 			arg2: []HeaderOpt{WithCorrelationID("test-correlation-id")},
-			want: &Headers{
-				Values: map[string]interface{}{
-					HeaderCorrelationID: "test-correlation-id",
-				},
-			},
+			want: Headers{HeaderCorrelationID: "test-correlation-id"},
 		},
 		"test_copy_existing_not_empty_haeder_with_new_value": {
-			arg1: &Headers{
-				Values: map[string]interface{}{HeaderCorrelationID: "test-correlation-id"},
-			},
+			arg1: Headers{HeaderCorrelationID: "test-correlation-id"},
 			arg2: []HeaderOpt{WithContentType("application/json")},
-			want: &Headers{
-				Values: map[string]interface{}{
-					HeaderCorrelationID: "test-correlation-id",
-					HeaderContentType:   "application/json",
-				},
+			want: Headers{
+				HeaderCorrelationID: "test-correlation-id",
+				HeaderContentType:   "application/json",
 			},
 		},
 		"test_copy_existing_not_empty_header_nil_value": {
-			arg1: &Headers{
-				Values: map[string]interface{}{HeaderCorrelationID: "test-correlation-id"},
-			},
+			arg1: Headers{HeaderCorrelationID: "test-correlation-id"},
 			arg2: nil,
-			want: &Headers{
-				Values: map[string]interface{}{HeaderCorrelationID: "test-correlation-id"},
-			},
+			want: Headers{HeaderCorrelationID: "test-correlation-id"},
 		},
 		"test_copy_existing_not_empty_header_empty_value": {
-			arg1: &Headers{
-				Values: map[string]interface{}{HeaderCorrelationID: "test-correlation-id"},
-			},
+			arg1: Headers{HeaderCorrelationID: "test-correlation-id"},
 			arg2: []HeaderOpt{},
-			want: &Headers{
-				Values: map[string]interface{}{HeaderCorrelationID: "test-correlation-id"},
-			},
+			want: Headers{HeaderCorrelationID: "test-correlation-id"},
 		},
 		"test_copy_existing_empty_header_nil_value": {
-			arg1: &Headers{},
+			arg1: Headers{},
 			arg2: nil,
-			want: &Headers{
-				Values: make(map[string]interface{}),
-			},
+			want: Headers{},
 		},
 		"test_copy_nil_header_with_values": {
 			arg1: nil,
 			arg2: []HeaderOpt{WithCorrelationID("correlation-id")},
-			want: &Headers{
-				Values: map[string]interface{}{HeaderCorrelationID: "correlation-id"},
-			},
+			want: Headers{HeaderCorrelationID: "correlation-id"},
 		},
 		"test_copy_nil_header_nil_value": {
 			arg1: nil,
 			arg2: nil,
-			want: &Headers{
-				make(map[string]interface{}),
-			},
+			want: Headers{},
 		},
 		"test_copy_nil_header_empty_value": {
 			arg1: nil,
 			arg2: []HeaderOpt{},
-			want: &Headers{
-				Values: make(map[string]interface{}),
-			},
+			want: Headers{},
 		},
 	}
 
@@ -194,7 +163,7 @@ func TestWithReplyTarget(t *testing.T) {
 		rt := "11111"
 
 		got := NewHeaders(WithReplyTarget(rt))
-		internal.AssertEqual(t, rt, got.Values[HeaderReplyTarget])
+		internal.AssertEqual(t, rt, got[HeaderReplyTarget])
 	})
 }
 
@@ -291,14 +260,6 @@ func TestWithTimeout(t *testing.T) {
 			arg:  0,
 			want: 0 * time.Second,
 		},
-		"test_without_unit": {
-			arg:  5,
-			want: 1 * time.Millisecond,
-		},
-		"test_with_invalid_timeout": {
-			arg:  -1,
-			want: 60 * time.Second,
-		},
 		"test_with_1_hour_timeout": {
 			arg:  time.Hour,
 			want: 60 * time.Second,
@@ -318,7 +279,7 @@ func TestWithSchemaVersion(t *testing.T) {
 		sv := "123456789"
 
 		got := NewHeaders(WithSchemaVersion("123456789"))
-		internal.AssertEqual(t, sv, got.Values[HeaderSchemaVersion])
+		internal.AssertEqual(t, sv, got[HeaderSchemaVersion])
 	})
 }
 

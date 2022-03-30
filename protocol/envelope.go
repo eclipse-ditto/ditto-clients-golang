@@ -15,7 +15,7 @@ package protocol
 // payload, the structure is to be used as a ready to use Ditto message.
 type Envelope struct {
 	Topic     *Topic      `json:"topic"`
-	Headers   *Headers    `json:"headers,omitempty"`
+	Headers   Headers     `json:"headers,omitempty"`
 	Path      string      `json:"path"`
 	Value     interface{} `json:"value,omitempty"`
 	Fields    string      `json:"fields,omitempty"`
@@ -32,7 +32,7 @@ func (msg *Envelope) WithTopic(topic *Topic) *Envelope {
 }
 
 // WithHeaders sets the Headers of the Envelope.
-func (msg *Envelope) WithHeaders(headers *Headers) *Envelope {
+func (msg *Envelope) WithHeaders(headers Headers) *Envelope {
 	msg.Headers = headers
 	return msg
 }

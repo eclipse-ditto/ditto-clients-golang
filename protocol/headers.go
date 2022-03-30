@@ -12,9 +12,9 @@
 package protocol
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -22,56 +22,89 @@ const (
 	// ContentTypeDitto defines the Ditto JSON 'content-type' header value for Ditto Protocol messages.
 	ContentTypeDitto = "application/vnd.eclipse.ditto+json"
 
+	// ContentTypeJSON defines the JSON 'content-type' header value for Ditto Protocol messages.
+	ContentTypeJSON = "application/json"
+
+	// ContentTypeJSONMerge defines the JSON merge patch 'content-type' header value for Ditto Protocol messages,
+	// as specified with RFC 7396 (https://datatracker.ietf.org/doc/html/rfc7396).
+	ContentTypeJSONMerge = "application/merge-patch+json"
+
 	// HeaderCorrelationID represents 'correlation-id' header.
 	HeaderCorrelationID = "correlation-id"
+
 	// HeaderResponseRequired represents 'response-required' header.
 	HeaderResponseRequired = "response-required"
+
 	// HeaderChannel represents 'ditto-channel' header.
 	HeaderChannel = "ditto-channel"
+
 	// HeaderDryRun represents 'ditto-dry-run' header.
 	HeaderDryRun = "ditto-dry-run"
+
 	// HeaderOrigin represents 'origin' header.
 	HeaderOrigin = "origin"
+
 	// HeaderOriginator represents 'ditto-originator' header.
 	HeaderOriginator = "ditto-originator"
-	// HeaderETag represents 'ETag' header.
-	HeaderETag = "ETag"
-	// HeaderIfMatch represents 'If-Match' header.
-	HeaderIfMatch = "If-Match"
-	// HeaderIfNoneMatch represents 'If-None-March' header.
-	HeaderIfNoneMatch = "If-None-Match"
+
+	// HeaderETag represents 'etag' header.
+	HeaderETag = "etag"
+
+	// HeaderIfMatch represents 'if-match' header.
+	HeaderIfMatch = "if-match"
+
+	// HeaderIfNoneMatch represents 'if-none-march' header.
+	HeaderIfNoneMatch = "if-none-match"
+
 	// HeaderReplyTarget represents 'ditto-reply-target' header.
 	HeaderReplyTarget = "ditto-reply-target"
+
 	// HeaderReplyTo represents 'reply-to' header.
 	HeaderReplyTo = "reply-to"
+
 	// HeaderTimeout represents 'timeout' header.
 	HeaderTimeout = "timeout"
+
 	// HeaderSchemaVersion represents 'version' header.
 	HeaderSchemaVersion = "version"
+
 	// HeaderContentType represents 'content-type' header.
 	HeaderContentType = "content-type"
 )
 
 // Headers represents all Ditto-specific headers along with additional HTTP/etc. headers
 // that can be applied depending on the transport used.
+// For the pre-defined headers, the values are in the row type. The getter methods are provided
+// to get the header value in specified type.
 // See https://www.eclipse.org/ditto/protocol-specification.html
-type Headers struct {
-	Values map[string]interface{}
-}
+type Headers map[string]interface{}
 
-// CorrelationID returns the 'correlation-id' header value or empty string if not set.
-func (h *Headers) CorrelationID() string {
-	if value, ok := h.Values[HeaderCorrelationID]; ok && value != nil {
-		return value.(string)
+// CorrelationID returns the 'correlation-id' header value if it is presented.
+// If the header value is not presented, the CorrelationID returns empty string.
+//
+// If there are two headers differing only in capitalization CorrelationID returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) CorrelationID() string {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderCorrelationID) {
+			return v.(string)
+		}
 	}
 	return ""
 }
 
-// Timeout returns the 'timeout' header value or duration of 60 seconds if not set.
-func (h *Headers) Timeout() time.Duration {
-	if value, ok := h.Values[HeaderTimeout]; ok {
-		if duration, err := parseTimeout(value.(string)); err == nil {
-			return duration
+// Timeout returns the 'timeout' header value if it is presented
+// The default and maximum value is duration of 60 seconds.
+// If the header value is not presented, the Timout returns the default value.
+//
+// If there are two headers differing only in capitalization, the Timeout returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) Timeout() time.Duration {
+	for k := range h {
+		if strings.EqualFold(k, HeaderTimeout) {
+			if duration, err := parseTimeout(h[k].(string)); err == nil {
+				return duration
+			}
 		}
 	}
 	return 60 * time.Second
@@ -101,136 +134,246 @@ func parseTimeout(timeout string) (time.Duration, error) {
 				t = time.Duration(i) * time.Second
 			}
 		}
-		if inTimeoutRange(t) {
+		if t >= 0 && t < time.Hour {
 			return t, nil
 		}
 	}
-	return -1, fmt.Errorf("invalid timeout '%s'", timeout)
+	return 60 * time.Second, fmt.Errorf("invalid timeout '%s'", timeout)
 }
 
-func inTimeoutRange(timeout time.Duration) bool {
-	return timeout >= 0 && timeout < time.Hour
-}
-
-// IsResponseRequired returns the 'response-required' header value or true if not set.
-func (h *Headers) IsResponseRequired() bool {
-	if value, ok := h.Values[HeaderResponseRequired]; ok && value != nil {
-		return value.(bool)
+// IsResponseRequired returns the 'response-required' header value if it is presented.
+// The default value is true.
+// If the header value is not presented, the IsResponseRequired returns the default value.
+//
+// If there are two headers differing only in capitalization, the IsResponseRequired returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) IsResponseRequired() bool {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderResponseRequired) {
+			return v.(bool)
+		}
 	}
 	return true
 }
 
-// Channel returns the 'ditto-channel' header value or empty string if not set.
-func (h *Headers) Channel() string {
-	if value, ok := h.Values[HeaderChannel]; ok && value != nil {
-		return value.(string)
+// Channel returns the 'ditto-channel' header value.
+// If the header value is not presented, the Channel returns empty string.
+//
+// If there are two headers differing only in capitalization, the Channel returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) Channel() string {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderChannel) {
+			return v.(string)
+		}
 	}
 	return ""
 }
 
-// IsDryRun returns the 'ditto-dry-run' header value or empty string if not set.
-func (h *Headers) IsDryRun() bool {
-	if value, ok := h.Values[HeaderDryRun]; ok && value != nil {
-		return value.(bool)
+// IsDryRun returns the 'ditto-dry-run' header value if it is presented.
+// The default value is false.
+// If the header value is not presented, the IsDryRun returns the default value.
+//
+// If there are two headers differing only in capitalization, the IsDryRun returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) IsDryRun() bool {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderDryRun) {
+			return v.(bool)
+		}
 	}
 	return false
 }
 
-// Origin returns the 'origin' header value or empty string if not set.
-func (h *Headers) Origin() string {
-	if value, ok := h.Values[HeaderOrigin]; ok && value != nil {
-		return value.(string)
-	}
-	return ""
-}
-
-// Originator returns the 'ditto-originator' header value or empty string if not set.
-func (h *Headers) Originator() string {
-	if value, ok := h.Values[HeaderOriginator]; ok && value != nil {
-		return value.(string)
-	}
-	return ""
-}
-
-// ETag returns the 'ETag' header value or empty string if not set.
-func (h *Headers) ETag() string {
-	if value, ok := h.Values[HeaderETag]; ok && value != nil {
-		return value.(string)
-	}
-	return ""
-}
-
-// IfMatch returns the 'If-Match' header value or empty string if not set.
-func (h *Headers) IfMatch() string {
-	if value, ok := h.Values[HeaderIfMatch]; ok && value != nil {
-		return value.(string)
-	}
-	return ""
-}
-
-// IfNoneMatch returns the 'If-None-Match' header value or empty string if not set.
-func (h *Headers) IfNoneMatch() string {
-	if value, ok := h.Values[HeaderIfNoneMatch]; ok && value != nil {
-		return value.(string)
-	}
-	return ""
-}
-
-// ReplyTarget returns the 'ditto-reply-target' header value or empty string if not set.
-func (h *Headers) ReplyTarget() int64 {
-	if value, ok := h.Values[HeaderReplyTarget]; ok && value != nil {
-		return value.(int64)
-	}
-	return 0
-}
-
-// ReplyTo returns the 'reply-to' header value or empty string if not set.
-func (h *Headers) ReplyTo() string {
-	if value, ok := h.Values[HeaderReplyTo]; ok && value != nil {
-		return value.(string)
-	}
-	return ""
-}
-
-// Version returns the 'version' header value or empty string if not set.
-func (h *Headers) Version() int64 {
-	if value, ok := h.Values[HeaderSchemaVersion]; ok && value != nil {
-		return value.(int64)
-	}
-	return 0
-}
-
-// ContentType returns the 'content-type' header value or empty string if not set.
-func (h *Headers) ContentType() string {
-	if value, ok := h.Values[HeaderContentType]; ok && value != nil {
-		return value.(string)
-	}
-	return ""
-}
-
-// Generic returns the value of the provided key header and if a header with such key is present.
-func (h *Headers) Generic(id string) interface{} {
-	return h.Values[id]
-}
-
-// MarshalJSON marshels Headers.
-func (h *Headers) MarshalJSON() ([]byte, error) {
-	return json.Marshal(h.Values)
-}
-
-// UnmarshalJSON unmarshels Headers.
-func (h *Headers) UnmarshalJSON(data []byte) error {
-	var m map[string]interface{}
-	if err := json.Unmarshal(data, &m); err != nil {
-		return err
-	}
-
-	if value, ok := m[HeaderTimeout]; ok {
-		if _, err := parseTimeout(value.(string)); err != nil {
-			return err
+// Origin returns the 'origin' header value if it is presented.
+// If the header value is not presented, the Origin returns the empty string.
+//
+// If there are two headers differing only in capitalization, the Origin returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) Origin() string {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderOrigin) {
+			return v.(string)
 		}
 	}
+	return ""
+}
 
-	h.Values = m
+// Originator returns the 'ditto-originator' header value if it is presented.
+// If the header value is not presented, the Originator returns the empty string.
+//
+// If there are two headers differing only in capitalization, the Originator returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) Originator() string {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderOriginator) {
+			return v.(string)
+		}
+	}
+	return ""
+}
+
+// ETag returns the 'etag' header value if it is presented.
+// If the header value is not presented, the ETag returns the empty string.
+//
+// If there are two headers differing only in capitalization, the ETag returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) ETag() string {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderETag) {
+			return v.(string)
+		}
+	}
+	return ""
+}
+
+// IfMatch returns the 'if-match' header value if it is presented.
+// If the header value is not presented, the IfMatch returns the empty string.
+//
+// If there are two headers differing only in capitalization, the IfMatch returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) IfMatch() string {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderIfMatch) {
+			return v.(string)
+		}
+	}
+	return ""
+}
+
+// IfNoneMatch returns the 'if-none-match' header value if it is presented.
+// If the header value is not presented, the IfNoneMatch returns the empty string.
+//
+// If there are two headers differing only in capitalization, the IfNoneMatch returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) IfNoneMatch() string {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderIfNoneMatch) {
+			return v.(string)
+		}
+	}
+	return ""
+}
+
+// ReplyTarget returns the 'ditto-reply-target' header value if it is presented.
+// If the header value is not presented, the ReplyTarget returns 0.
+//
+// If there are two headers differing only in capitalization, the ReplyTarget returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) ReplyTarget() int64 {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderReplyTarget) {
+			return v.(int64)
+		}
+	}
+	return 0
+}
+
+// ReplyTo returns the 'reply-to' header value if it is presented.
+// If the header value is not presented, the ReplyTo returns the empty string.
+//
+// If there are two headers differing only in capitalization, the ReplyTo returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) ReplyTo() string {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderReplyTo) {
+			return v.(string)
+		}
+	}
+	return ""
+}
+
+// Version returns the 'version' header value if it is presented.
+// If the header value is not presented, the Version returns 0.
+//
+// If there are two headers differing only in capitalization, the Version returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) Version() int64 {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderSchemaVersion) {
+			return v.(int64)
+		}
+	}
+	return 0
+}
+
+// ContentType returns the 'content-type' header value if it is presented.
+// If the header value is not presented, the ContentType returns the empty string.
+//
+// If there are two headers differing only in capitalization, the ContentType returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) ContentType() string {
+	for k, v := range h {
+		if strings.EqualFold(k, HeaderContentType) {
+			return v.(string)
+		}
+	}
+	return ""
+}
+
+// Generic returns the first value of the provided key header. Capitalization of header names does not affect the header map.
+// If there are no provided value, Generic returns nil.
+//
+// If there are two headers differing only in capitalization Generic returns the first value.
+// To use the provided key to get the value, access the map directly.
+func (h Headers) Generic(id string) interface{} {
+	for k, v := range h {
+		if strings.EqualFold(k, id) {
+			return v
+		}
+	}
 	return nil
+}
+
+// // MarshalJSON marshels Headers.
+// func (h *Headers) MarshalJSON() ([]byte, error) {
+// 	// TODO validation
+// 	// convert - timeout - ditto timeout string
+// 	// error for invalid values
+// 	return json.Marshal(h.Values)
+// }
+
+// UnmarshalJSON unmarshels Headers.
+// func (h *Headers) UnmarshalJSON(data []byte) error {
+// 	var m map[string]interface{}
+
+// 	if err := json.Unmarshal(data, &m); err != nil {
+// 		return err
+// 	}
+
+// 	for k := range m {
+// 		// TODO for all headers
+// 		// error for ivalid values
+// 		if strings.EqualFold(k, HeaderTimeout) && m[k] != nil {
+// 			m[k] = parseTimeout(m[k].(string))
+// 		}
+// 	}
+
+// 	h.Values = m
+
+// 	return nil
+// }
+
+// UnmarshalJSON unmarshels Headers.
+// func (h *Headers) UnmarshalJSON(data []byte) error {
+// 	temp := make(map[string]interface{})
+// 	if err := json.Unmarshal(data, &temp); err != nil {
+// 		return err
+// 	}
+// 	*h = temp
+// 	return nil
+// }
+
+// With sets new Headers to the existing.
+func (h Headers) With(opts ...HeaderOpt) Headers {
+	res := make(map[string]interface{})
+
+	for key, value := range h {
+		res[key] = value
+	}
+
+	if err := applyOptsHeader(res, opts...); err != nil {
+		return nil
+	}
+	return res
 }

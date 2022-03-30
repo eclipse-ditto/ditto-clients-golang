@@ -18,9 +18,9 @@ import (
 
 // HeaderOpt represents a specific Headers option that can be applied to the Headers instance
 // resulting in changing the value of a specific header of a set of headers.
-type HeaderOpt func(headers *Headers) error
+type HeaderOpt func(headers Headers) error
 
-func applyOptsHeader(headers *Headers, opts ...HeaderOpt) error {
+func applyOptsHeader(headers Headers, opts ...HeaderOpt) error {
 	for _, o := range opts {
 		if err := o(headers); err != nil {
 			return err
@@ -30,9 +30,8 @@ func applyOptsHeader(headers *Headers, opts ...HeaderOpt) error {
 }
 
 // NewHeaders returns a new Headers instance.
-func NewHeaders(opts ...HeaderOpt) *Headers {
-	res := &Headers{}
-	res.Values = make(map[string]interface{})
+func NewHeaders(opts ...HeaderOpt) Headers {
+	res := Headers{}
 	if err := applyOptsHeader(res, opts...); err != nil {
 		return nil
 	}
@@ -40,16 +39,16 @@ func NewHeaders(opts ...HeaderOpt) *Headers {
 }
 
 // NewHeadersFrom returns a new Headers instance using the provided header.
-func NewHeadersFrom(orig *Headers, opts ...HeaderOpt) *Headers {
+func NewHeadersFrom(orig Headers, opts ...HeaderOpt) Headers {
 	if orig == nil {
 		return NewHeaders(opts...)
 	}
-	res := &Headers{
-		Values: make(map[string]interface{}),
+	res := Headers{}
+
+	for key, value := range orig {
+		res[key] = value
 	}
-	for key, value := range orig.Values {
-		res.Values[key] = value
-	}
+
 	if err := applyOptsHeader(res, opts...); err != nil {
 		return nil
 	}
@@ -58,152 +57,140 @@ func NewHeadersFrom(orig *Headers, opts ...HeaderOpt) *Headers {
 
 // WithCorrelationID sets the 'correlation-id' header value.
 func WithCorrelationID(correlationID string) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderCorrelationID] = correlationID
+	return func(headers Headers) error {
+		headers[HeaderCorrelationID] = correlationID
 		return nil
 	}
 }
 
 // WithReplyTo sets the 'reply-to' header value.
 func WithReplyTo(replyTo string) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderReplyTo] = replyTo
+	return func(headers Headers) error {
+		headers[HeaderReplyTo] = replyTo
 		return nil
 	}
 }
 
 // WithReplyTarget sets the 'ditto-reply-target' header value.
 func WithReplyTarget(replyTarget string) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderReplyTarget] = replyTarget
+	return func(headers Headers) error {
+		headers[HeaderReplyTarget] = replyTarget
 		return nil
 	}
 }
 
 // WithChannel sets the 'ditto-channel' header value.
 func WithChannel(channel string) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderChannel] = channel
+	return func(headers Headers) error {
+		headers[HeaderChannel] = channel
 		return nil
 	}
 }
 
 // WithResponseRequired sets the 'response-required' header value.
 func WithResponseRequired(isResponseRequired bool) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderResponseRequired] = isResponseRequired
+	return func(headers Headers) error {
+		headers[HeaderResponseRequired] = isResponseRequired
 		return nil
 	}
 }
 
 // WithOriginator sets the 'ditto-originator' header value.
 func WithOriginator(dittoOriginator string) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderOriginator] = dittoOriginator
+	return func(headers Headers) error {
+		headers[HeaderOriginator] = dittoOriginator
 		return nil
 	}
 }
 
 // WithOrigin sets the 'origin' header value.
 func WithOrigin(origin string) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderOrigin] = origin
+	return func(headers Headers) error {
+		headers[HeaderOrigin] = origin
 		return nil
 	}
 }
 
 // WithDryRun sets the 'ditto-dry-run' header value.
 func WithDryRun(isDryRun bool) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderDryRun] = isDryRun
+	return func(headers Headers) error {
+		headers[HeaderDryRun] = isDryRun
 		return nil
 	}
 }
 
-// WithETag sets the 'ETag' header value.
+// WithETag sets the 'etag' header value.
 func WithETag(eTag string) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderETag] = eTag
+	return func(headers Headers) error {
+		headers[HeaderETag] = eTag
 		return nil
 	}
 }
 
-// WithIfMatch sets the 'If-Match' header value.
+// WithIfMatch sets the 'if-match' header value.
 func WithIfMatch(ifMatch string) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderIfMatch] = ifMatch
+	return func(headers Headers) error {
+		headers[HeaderIfMatch] = ifMatch
 		return nil
 	}
 }
 
-// WithIfNoneMatch sets the 'If-None-Match' header value.
+// WithIfNoneMatch sets the 'if-none-match' header value.
 func WithIfNoneMatch(ifNoneMatch string) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderIfNoneMatch] = ifNoneMatch
+	return func(headers Headers) error {
+		headers[HeaderIfNoneMatch] = ifNoneMatch
 		return nil
 	}
 }
 
 // WithTimeout sets the 'timeout' header value.
-//
-// The provided value should be a non-negative duration in Millisecond, Second or Minute unit.
-// The change results in timeout header string value containing the duration
-// and the unit symbol (ms, s or m), e.g. '45s' or '250ms' or '1m'.
-//
-// The default value is '60s'.
-// If a negative duration or duration of an hour or more is provided, the timeout header value
-// is removed, i.e. the default one is used.
 func WithTimeout(timeout time.Duration) HeaderOpt {
-	return func(headers *Headers) error {
-		if inTimeoutRange(timeout) {
-			var value string
+	return func(headers Headers) error {
+		var value string
 
-			if timeout > time.Second {
-				div := int64(timeout / time.Second)
-				rem := timeout % time.Second
-				if rem == 0 {
-					value = strconv.FormatInt(div, 10)
-				} else {
-					value = strconv.FormatInt(div+1, 10)
-				}
+		if timeout > time.Second {
+			div := int64(timeout / time.Second)
+			rem := timeout % time.Second
+			if rem == 0 {
+				value = strconv.FormatInt(div, 10)
 			} else {
-				div := int64(timeout / time.Millisecond)
-				rem := timeout % time.Millisecond
-				if rem == 0 {
-					value = strconv.FormatInt(div, 10) + "ms"
-				} else {
-					value = strconv.FormatInt(div+1, 10) + "ms"
-				}
+				value = strconv.FormatInt(div+1, 10)
 			}
-
-			headers.Values[HeaderTimeout] = value
 		} else {
-			delete(headers.Values, HeaderTimeout)
+			div := int64(timeout / time.Millisecond)
+			rem := timeout % time.Millisecond
+			if rem == 0 {
+				value = strconv.FormatInt(div, 10) + "ms"
+			} else {
+				value = strconv.FormatInt(div+1, 10) + "ms"
+			}
 		}
+
+		headers[HeaderTimeout] = value
 		return nil
 	}
 }
 
 // WithSchemaVersion sets the 'version' header value.
 func WithSchemaVersion(schemaVersion string) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderSchemaVersion] = schemaVersion
+	return func(headers Headers) error {
+		headers[HeaderSchemaVersion] = schemaVersion
 		return nil
 	}
 }
 
 // WithContentType sets the 'content-type' header value.
 func WithContentType(contentType string) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[HeaderContentType] = contentType
+	return func(headers Headers) error {
+		headers[HeaderContentType] = contentType
 		return nil
 	}
 }
 
 // WithGeneric sets the value of the provided key header.
 func WithGeneric(headerID string, value interface{}) HeaderOpt {
-	return func(headers *Headers) error {
-		headers.Values[headerID] = value
+	return func(headers Headers) error {
+		headers[headerID] = value
 		return nil
 	}
 }

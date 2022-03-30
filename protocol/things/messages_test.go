@@ -117,14 +117,10 @@ func TestMessageEnvelope(t *testing.T) {
 				protocol.WithChannel("testChannel"),
 			},
 			want: &protocol.Envelope{
-				Topic: msg.Topic,
-				Path:  fmt.Sprintf(pathMessagesFormat, msg.AddressedPartOfThing, msg.Mailbox, msg.Subject),
-				Value: msg.Payload,
-				Headers: &protocol.Headers{
-					Values: map[string]interface{}{
-						protocol.HeaderChannel: "testChannel",
-					},
-				},
+				Topic:   msg.Topic,
+				Path:    fmt.Sprintf(pathMessagesFormat, msg.AddressedPartOfThing, msg.Mailbox, msg.Subject),
+				Value:   msg.Payload,
+				Headers: protocol.Headers{protocol.HeaderChannel: "testChannel"},
 			},
 		},
 	}

@@ -12,7 +12,7 @@
 package protocol
 
 import (
-	"errors"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -21,25 +21,20 @@ import (
 
 func TestHeadersCorrelationID(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       string
 	}{
 		"test_with_correlation_id": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderCorrelationID: "correlation-id"},
-			},
-			want: "correlation-id",
-		},
-		"test_correlation_id_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{
-					HeaderCorrelationID: nil,
-				},
-			},
-			want: "",
+			testHeader: Headers{HeaderCorrelationID: "correlation-id"},
+			want:       "correlation-id",
 		},
 		"test_without_correlation_id": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
+			want:       "",
+		},
+
+		"test_empty_correlation_id": {
+			testHeader: Headers{HeaderCorrelationID: ""},
 			want:       "",
 		},
 	}
@@ -54,23 +49,15 @@ func TestHeadersCorrelationID(t *testing.T) {
 
 func TestHeadersTimeout(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       time.Duration
 	}{
 		"test_with_timeout": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderTimeout: "10s"},
-			},
-			want: 10 * time.Second,
-		},
-		"test_timeout_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderTimeout: ""},
-			},
-			want: 60 * time.Second,
+			testHeader: Headers{HeaderTimeout: "10s"},
+			want:       10 * time.Second,
 		},
 		"test_without_timeout": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       60 * time.Second,
 		},
 	}
@@ -129,7 +116,7 @@ func TestTimeout(t *testing.T) {
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			headers := NewHeaders()
-			headers.UnmarshalJSON([]byte(testCase.data))
+			json.Unmarshal([]byte(testCase.data), &headers)
 			internal.AssertEqual(t, testCase.want, headers.Timeout())
 		})
 	}
@@ -137,23 +124,19 @@ func TestTimeout(t *testing.T) {
 
 func TestHeadersIsResponseRequired(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       bool
 	}{
-		"test_with_response_required": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderResponseRequired: false},
-			},
-			want: false,
+		"test_with_response_required_false": {
+			testHeader: Headers{HeaderResponseRequired: false},
+			want:       false,
 		},
-		"test_response_required_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderResponseRequired: nil},
-			},
-			want: true,
+		"test_with_response_required_true": {
+			testHeader: Headers{HeaderResponseRequired: true},
+			want:       true,
 		},
 		"test_without_response_required": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       true,
 		},
 	}
@@ -168,23 +151,15 @@ func TestHeadersIsResponseRequired(t *testing.T) {
 
 func TestHeadersChannel(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       string
 	}{
 		"test_with_channel": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderChannel: "1"},
-			},
-			want: "1",
-		},
-		"test_channel_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderChannel: nil},
-			},
-			want: "",
+			testHeader: Headers{HeaderChannel: "1"},
+			want:       "1",
 		},
 		"test_without_channel": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       "",
 		},
 	}
@@ -199,23 +174,15 @@ func TestHeadersChannel(t *testing.T) {
 
 func TestHeadersIsDryRun(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       bool
 	}{
 		"test_with_dry_run": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderDryRun: true},
-			},
-			want: true,
-		},
-		"test_dry_run_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderDryRun: nil},
-			},
-			want: false,
+			testHeader: Headers{HeaderDryRun: true},
+			want:       true,
 		},
 		"test_without_dry_run": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       false,
 		},
 	}
@@ -230,23 +197,15 @@ func TestHeadersIsDryRun(t *testing.T) {
 
 func TestHeadersOrigin(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       string
 	}{
 		"test_with_origin": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderOrigin: "origin"},
-			},
-			want: "origin",
-		},
-		"test_origin_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderOrigin: nil},
-			},
-			want: "",
+			testHeader: Headers{HeaderOrigin: "origin"},
+			want:       "origin",
 		},
 		"test_without_origin": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       "",
 		},
 	}
@@ -261,23 +220,15 @@ func TestHeadersOrigin(t *testing.T) {
 
 func TestHeadersOriginator(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       string
 	}{
 		"test_with_ditto_originator": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderOriginator: "ditto-originator"},
-			},
-			want: "ditto-originator",
-		},
-		"test_ditto_originator_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderOriginator: nil},
-			},
-			want: "",
+			testHeader: Headers{HeaderOriginator: "ditto-originator"},
+			want:       "ditto-originator",
 		},
 		"test_without_ditto_originator": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       "",
 		},
 	}
@@ -292,23 +243,15 @@ func TestHeadersOriginator(t *testing.T) {
 
 func TestHeadersETag(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       string
 	}{
 		"test_with_etag": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderETag: "test-etag"},
-			},
-			want: "test-etag",
-		},
-		"test_etag_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderETag: nil},
-			},
-			want: "",
+			testHeader: Headers{HeaderETag: "test-etag"},
+			want:       "test-etag",
 		},
 		"test_without_etag": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       "",
 		},
 	}
@@ -323,23 +266,15 @@ func TestHeadersETag(t *testing.T) {
 
 func TestHeadersIfMatch(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       string
 	}{
 		"test_with_if_match": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderIfMatch: "HeaderIfMatch"},
-			},
-			want: "HeaderIfMatch",
-		},
-		"test_if_match_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderIfMatch: nil},
-			},
-			want: "",
+			testHeader: Headers{HeaderIfMatch: "HeaderIfMatch"},
+			want:       "HeaderIfMatch",
 		},
 		"test_without_if_match": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       "",
 		},
 	}
@@ -354,23 +289,15 @@ func TestHeadersIfMatch(t *testing.T) {
 
 func TestHeadersIfNoneMatch(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       string
 	}{
 		"test_with_if_none_match": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderIfNoneMatch: "HeaderIfNoneMatch"},
-			},
-			want: "HeaderIfNoneMatch",
-		},
-		"test_if_none_match_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderIfNoneMatch: nil},
-			},
-			want: "",
+			testHeader: Headers{HeaderIfNoneMatch: "HeaderIfNoneMatch"},
+			want:       "HeaderIfNoneMatch",
 		},
 		"test_without_if_none_match": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       "",
 		},
 	}
@@ -385,23 +312,15 @@ func TestHeadersIfNoneMatch(t *testing.T) {
 
 func TestHeadersReplyTarget(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       int64
 	}{
 		"test_with_reply_target": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderReplyTarget: int64(123)},
-			},
-			want: int64(123),
-		},
-		"test_reply_target_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderReplyTarget: nil},
-			},
-			want: 0,
+			testHeader: Headers{HeaderReplyTarget: int64(123)},
+			want:       int64(123),
 		},
 		"test_without_reply_target": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       0,
 		},
 	}
@@ -416,23 +335,15 @@ func TestHeadersReplyTarget(t *testing.T) {
 
 func TestHeadersReplyTo(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       string
 	}{
 		"test_with_reply_to": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderReplyTo: "someone"},
-			},
-			want: "someone",
-		},
-		"test_reply_to_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderReplyTo: nil},
-			},
-			want: "",
+			testHeader: Headers{HeaderReplyTo: "someone"},
+			want:       "someone",
 		},
 		"test_without_reply_to": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       "",
 		},
 	}
@@ -447,23 +358,15 @@ func TestHeadersReplyTo(t *testing.T) {
 
 func TestHeadersVersion(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       int64
 	}{
 		"test_with_version": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderSchemaVersion: int64(123)},
-			},
-			want: int64(123),
-		},
-		"test_version_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderSchemaVersion: nil},
-			},
-			want: 0,
+			testHeader: Headers{HeaderSchemaVersion: int64(123)},
+			want:       int64(123),
 		},
 		"test_without_version": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       0,
 		},
 	}
@@ -478,23 +381,15 @@ func TestHeadersVersion(t *testing.T) {
 
 func TestHeadersContentType(t *testing.T) {
 	tests := map[string]struct {
-		testHeader *Headers
+		testHeader Headers
 		want       string
 	}{
 		"test_with_content_type": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderContentType: "HeaderContentType"},
-			},
-			want: "HeaderContentType",
-		},
-		"test_content_type_value_nil": {
-			testHeader: &Headers{
-				Values: map[string]interface{}{HeaderContentType: nil},
-			},
-			want: "",
+			testHeader: Headers{HeaderContentType: "HeaderContentType"},
+			want:       "HeaderContentType",
 		},
 		"test_without_content_type": {
-			testHeader: &Headers{},
+			testHeader: Headers{},
 			want:       "",
 		},
 	}
@@ -511,9 +406,7 @@ func TestHeadersGeneric(t *testing.T) {
 	t.Run("TestHeadersGeneric", func(t *testing.T) {
 		arg := make(map[string]interface{})
 		arg[HeaderContentType] = "HeaderContentType"
-		h := &Headers{
-			Values: arg,
-		}
+		h := Headers{HeaderContentType: "HeaderContentType"}
 
 		got := h.Generic(HeaderContentType)
 		internal.AssertEqual(t, arg[HeaderContentType], got)
@@ -544,8 +437,7 @@ func TestHeadersMarshalJSON(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			h := &Headers{testCase.data}
-			got, err := h.MarshalJSON()
+			got, err := json.Marshal(testCase.data)
 			if testCase.wantErr {
 				if err == nil {
 					t.Errorf("Headers.MarshalJSON() error must not be nil")
@@ -561,56 +453,59 @@ func TestHeadersMarshalJSON(t *testing.T) {
 
 func TestHeadersUnmarshalJSON(t *testing.T) {
 	tests := map[string]struct {
-		data    string
-		wantErr error
+		data string
+		want Headers
 	}{
 		"test_headers_unmarshal_JSON_with_one_heder": {
-			data:    `{"content-type":"application/json"}`,
-			wantErr: nil,
+			data: `{"content-type":"application/json"}`,
+			want: Headers{HeaderContentType: "application/json"},
 		},
 		"test_headers_unmarshal_JSON_with_many_headers": {
 			data: `{
-				"content-type": "application/json",
-				"response-required": false,
-				"timeout": "30ms"
+				"content-type":"application/json",
+				"timeout": "30ms",
+				"response-required":false
 			}`,
-			wantErr: nil,
-		},
-		"test_headers_unmarshal_JSON_negative_timeout": {
-			data: `{
-				"timeout": "-30"
-			}`,
-			wantErr: errors.New("invalid timeout '-30'"),
-		},
-		"test_headers_unmarshal_JSON_invalid_timeout": {
-			data: `{
-				"timeout": "1h"
-			}`,
-			wantErr: errors.New("invalid timeout '1h'"),
-		},
-		"test_headers_unmarshal_JSON_empty_timeout": {
-			data: `{
-				"timeout": ""
-			}`,
-			wantErr: errors.New("invalid timeout ''"),
-		},
-		"test_headers_unmarshal_JSON_zero_timeout": {
-			data: `{
-				"timeout": "0"
-			}`,
-			wantErr: nil,
+			want: Headers{
+				HeaderContentType:      "application/json",
+				HeaderTimeout:          "30ms",
+				HeaderResponseRequired: false,
+			},
 		},
 		"test_headers_unmarshal_JSON_err": {
-			data:    "",
-			wantErr: errors.New("unexpected end of JSON input"),
+			data: "",
+			want: Headers{},
 		},
 	}
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			got := NewHeaders()
-			err := got.UnmarshalJSON([]byte(testCase.data))
-			internal.AssertError(t, testCase.wantErr, err)
+			json.Unmarshal([]byte(testCase.data), &got)
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
+}
+
+func TestCaseInsensitiveKey(t *testing.T) {
+	headers := Headers{HeaderCorrelationID: "correlation-id-1"}
+	envelope := &Envelope{
+		Headers: headers,
+	}
+	// override correlation-id instead of custom header - header key is the last set one
+	internal.AssertEqual(t, "correlation-id-1", envelope.Headers.Generic("correlation-ID"))
+
+	envelope.WithHeaders(NewHeaders(WithGeneric("coRRelation-ID", "correlation-id-2")))
+
+	// return the first correlation-id (side effect from unmarshal JSON)
+	res := envelope.Headers.CorrelationID()
+	internal.AssertEqual(t, "correlation-id-2", res)
+
+	json.Marshal(envelope.Headers)
+
+	data := `{
+	    "correlation-iD":"correlation-id-3"
+	}`
+	json.Unmarshal([]byte(data), &envelope.Headers)
+	internal.AssertEqual(t, "correlation-id-3", envelope.Headers["correlation-iD"])
 }

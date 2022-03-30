@@ -355,14 +355,10 @@ func TestEnvelope(t *testing.T) {
 				protocol.WithChannel("testChannel"),
 			},
 			want: &protocol.Envelope{
-				Topic: cmd.Topic,
-				Path:  cmd.Path,
-				Value: cmd.Payload,
-				Headers: &protocol.Headers{
-					Values: map[string]interface{}{
-						protocol.HeaderChannel: "testChannel",
-					},
-				},
+				Topic:   cmd.Topic,
+				Path:    cmd.Path,
+				Value:   cmd.Payload,
+				Headers: protocol.Headers{protocol.HeaderChannel: "testChannel"},
 			},
 		},
 	}
