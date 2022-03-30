@@ -2,6 +2,7 @@
 
 [![Join the chat at https://gitter.im/eclipse/ditto](https://badges.gitter.im/eclipse/ditto.svg)](https://gitter.im/eclipse/ditto?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Go Reference](https://pkg.go.dev/badge/github.com/eclipse/ditto-clients-golang.svg)](https://pkg.go.dev/github.com/eclipse/ditto-clients-golang)
+[![Build Status](https://github.com/eclipse/ditto-clients-golang/workflows/Go/badge.svg)](https://github.com/eclipse/ditto-clients-golang/actions?query=workflow%3AGo)
 [![License](https://img.shields.io/badge/License-EPL%202.0-green.svg)](https://opensource.org/licenses/EPL-2.0)
 
 This repository contains the Golang client SDK for [Eclipse Ditto](https://eclipse.org/ditto/).
