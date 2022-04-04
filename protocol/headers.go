@@ -12,10 +12,13 @@
 package protocol
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -72,15 +75,16 @@ const (
 	HeaderContentType = "content-type"
 )
 
-// Headers represents all Ditto-specific headers along with additional HTTP/etc. headers
+// Headers represents all Ditto-specific headers along with additional HTTP/etc. Headers
 // that can be applied depending on the transport used.
-// For the pre-defined headers, the values are in the row type. The getter methods are provided
-// to get the header value in specified type.
+//
+// The header values in this map should be serialized.
+// The provided getter methods returns the header values which is associated with this definition's key.
 // See https://www.eclipse.org/ditto/protocol-specification.html
 type Headers map[string]interface{}
 
 // CorrelationID returns the 'correlation-id' header value if it is presented.
-// If the header value is not presented, the CorrelationID returns empty string.
+// If the header value is not presented, the 'correlation-id' header value will be generated in UUID format.
 //
 // If there are two headers differing only in capitalization CorrelationID returns the first value.
 // To use the provided key to get the value, access the map directly.
@@ -90,10 +94,10 @@ func (h Headers) CorrelationID() string {
 			return v.(string)
 		}
 	}
-	return ""
+	return uuid.New().String()
 }
 
-// Timeout returns the 'timeout' header value if it is presented
+// Timeout returns the 'timeout' header value if it is presented.
 // The default and maximum value is duration of 60 seconds.
 // If the header value is not presented, the Timout returns the default value.
 //
@@ -134,7 +138,7 @@ func parseTimeout(timeout string) (time.Duration, error) {
 				t = time.Duration(i) * time.Second
 			}
 		}
-		if t >= 0 && t < time.Hour {
+		if t >= 0 && t <= 60*time.Second {
 			return t, nil
 		}
 	}
@@ -284,7 +288,7 @@ func (h Headers) ReplyTo() string {
 }
 
 // Version returns the 'version' header value if it is presented.
-// If the header value is not presented, the Version returns 0.
+// If the header value is not presented, the Version returns 2.
 //
 // If there are two headers differing only in capitalization, the Version returns the first value.
 // To use the provided key to get the value, access the map directly.
@@ -294,7 +298,7 @@ func (h Headers) Version() int64 {
 			return v.(int64)
 		}
 	}
-	return 0
+	return 2
 }
 
 // ContentType returns the 'content-type' header value if it is presented.
@@ -325,44 +329,26 @@ func (h Headers) Generic(id string) interface{} {
 	return nil
 }
 
-// // MarshalJSON marshels Headers.
-// func (h *Headers) MarshalJSON() ([]byte, error) {
-// 	// TODO validation
-// 	// convert - timeout - ditto timeout string
-// 	// error for invalid values
-// 	return json.Marshal(h.Values)
-// }
-
 // UnmarshalJSON unmarshels Headers.
-// func (h *Headers) UnmarshalJSON(data []byte) error {
-// 	var m map[string]interface{}
-
-// 	if err := json.Unmarshal(data, &m); err != nil {
-// 		return err
-// 	}
-
-// 	for k := range m {
-// 		// TODO for all headers
-// 		// error for ivalid values
-// 		if strings.EqualFold(k, HeaderTimeout) && m[k] != nil {
-// 			m[k] = parseTimeout(m[k].(string))
-// 		}
-// 	}
-
-// 	h.Values = m
-
-// 	return nil
-// }
-
-// UnmarshalJSON unmarshels Headers.
-// func (h *Headers) UnmarshalJSON(data []byte) error {
-// 	temp := make(map[string]interface{})
-// 	if err := json.Unmarshal(data, &temp); err != nil {
-// 		return err
-// 	}
-// 	*h = temp
-// 	return nil
-// }
+//
+// The header names are case-insensitive and case-preserving.
+// If there is the same header name as the provided and the difference is
+// in capitalization the new header name will be set.
+func (h *Headers) UnmarshalJSON(data []byte) error {
+	temp := make(map[string]interface{})
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+	for k := range temp {
+		for k1 := range *h {
+			if strings.EqualFold(k, k1) {
+				delete(*h, k1)
+			}
+		}
+	}
+	*h = temp
+	return nil
+}
 
 // With sets new Headers to the existing.
 func (h Headers) With(opts ...HeaderOpt) Headers {

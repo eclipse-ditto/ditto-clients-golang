@@ -30,9 +30,7 @@ func TestHeadersCorrelationID(t *testing.T) {
 		},
 		"test_without_correlation_id": {
 			testHeader: Headers{},
-			want:       "",
 		},
-
 		"test_empty_correlation_id": {
 			testHeader: Headers{HeaderCorrelationID: ""},
 			want:       "",
@@ -42,7 +40,11 @@ func TestHeadersCorrelationID(t *testing.T) {
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			got := testCase.testHeader.CorrelationID()
-			internal.AssertEqual(t, testCase.want, got)
+			if testCase.testHeader[HeaderCorrelationID] == nil {
+				internal.AssertNotNil(t, got)
+			} else {
+				internal.AssertEqual(t, testCase.want, got)
+			}
 		})
 	}
 }
@@ -367,7 +369,7 @@ func TestHeadersVersion(t *testing.T) {
 		},
 		"test_without_version": {
 			testHeader: Headers{},
-			want:       0,
+			want:       2,
 		},
 	}
 
@@ -508,4 +510,17 @@ func TestCaseInsensitiveKey(t *testing.T) {
 	}`
 	json.Unmarshal([]byte(data), &envelope.Headers)
 	internal.AssertEqual(t, "correlation-id-3", envelope.Headers["correlation-iD"])
+}
+
+func TestCasePreservedKey(t *testing.T) {
+	headers := Headers{HeaderCorrelationID: "correlation-id-1"}
+
+	data := `{
+	    "correlation-iD":"correlation-id-2"
+	}`
+
+	want := Headers{"correlation-iD": "correlation-id-2"}
+
+	headers.UnmarshalJSON([]byte(data))
+	internal.AssertEqual(t, want, headers)
 }
