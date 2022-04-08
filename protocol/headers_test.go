@@ -21,29 +21,33 @@ import (
 
 func TestHeadersCorrelationID(t *testing.T) {
 	tests := map[string]struct {
-		testHeader Headers
-		want       string
+		testHeader       Headers
+		want             string
+		hasCorrelationID bool
 	}{
 		"test_with_correlation_id": {
-			testHeader: Headers{HeaderCorrelationID: "correlation-id"},
-			want:       "correlation-id",
+			testHeader:       Headers{HeaderCorrelationID: "correlation-id"},
+			want:             "correlation-id",
+			hasCorrelationID: true,
 		},
 		"test_without_correlation_id": {
-			testHeader: Headers{},
+			testHeader:       Headers{},
+			hasCorrelationID: false,
 		},
 		"test_empty_correlation_id": {
-			testHeader: Headers{HeaderCorrelationID: ""},
-			want:       "",
+			testHeader:       Headers{HeaderCorrelationID: ""},
+			want:             "",
+			hasCorrelationID: true,
 		},
 	}
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			got := testCase.testHeader.CorrelationID()
-			if testCase.testHeader[HeaderCorrelationID] == nil {
-				internal.AssertNotNil(t, got)
-			} else {
+			if testCase.hasCorrelationID {
 				internal.AssertEqual(t, testCase.want, got)
+			} else {
+				internal.AssertNotNil(t, got)
 			}
 		})
 	}
@@ -510,17 +514,4 @@ func TestCaseInsensitiveKey(t *testing.T) {
 	}`
 	json.Unmarshal([]byte(data), &envelope.Headers)
 	internal.AssertEqual(t, "correlation-id-3", envelope.Headers["correlation-iD"])
-}
-
-func TestCasePreservedKey(t *testing.T) {
-	headers := Headers{HeaderCorrelationID: "correlation-id-1"}
-
-	data := `{
-	    "correlation-iD":"correlation-id-2"
-	}`
-
-	want := Headers{"correlation-iD": "correlation-id-2"}
-
-	headers.UnmarshalJSON([]byte(data))
-	internal.AssertEqual(t, want, headers)
 }

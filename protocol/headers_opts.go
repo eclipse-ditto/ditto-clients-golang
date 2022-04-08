@@ -13,7 +13,6 @@ package protocol
 
 import (
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -189,17 +188,8 @@ func WithContentType(contentType string) HeaderOpt {
 }
 
 // WithGeneric sets the value of the provided key header.
-//
-// The header names are case-insensitive and case-preserving.
-// If there is the same header name as the provided and the difference is
-// in capitalization the new header name will be set.
 func WithGeneric(headerID string, value interface{}) HeaderOpt {
 	return func(headers Headers) error {
-		for k := range headers {
-			if strings.EqualFold(k, headerID) {
-				delete(headers, k)
-			}
-		}
 		headers[headerID] = value
 		return nil
 	}

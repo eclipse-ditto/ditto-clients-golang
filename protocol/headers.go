@@ -12,7 +12,6 @@
 package protocol
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -86,7 +85,7 @@ type Headers map[string]interface{}
 // CorrelationID returns the 'correlation-id' header value if it is presented.
 // If the header value is not presented, the 'correlation-id' header value will be generated in UUID format.
 //
-// If there are two headers differing only in capitalization CorrelationID returns the first value.
+// If there are more than one headers differing only in capitalization, the CorrelationID returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) CorrelationID() string {
 	for k, v := range h {
@@ -94,14 +93,15 @@ func (h Headers) CorrelationID() string {
 			return v.(string)
 		}
 	}
-	return uuid.New().String()
+	h[HeaderCorrelationID] = uuid.New().String()
+	return h[HeaderCorrelationID].(string)
 }
 
 // Timeout returns the 'timeout' header value if it is presented.
 // The default and maximum value is duration of 60 seconds.
 // If the header value is not presented, the Timout returns the default value.
 //
-// If there are two headers differing only in capitalization, the Timeout returns the first value.
+// If there are more than one headers differing only in capitalization, the Timeout returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) Timeout() time.Duration {
 	for k := range h {
@@ -149,7 +149,7 @@ func parseTimeout(timeout string) (time.Duration, error) {
 // The default value is true.
 // If the header value is not presented, the IsResponseRequired returns the default value.
 //
-// If there are two headers differing only in capitalization, the IsResponseRequired returns the first value.
+// If there are more than one headers differing only in capitalization, the IsResponseRequired returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) IsResponseRequired() bool {
 	for k, v := range h {
@@ -163,7 +163,7 @@ func (h Headers) IsResponseRequired() bool {
 // Channel returns the 'ditto-channel' header value.
 // If the header value is not presented, the Channel returns empty string.
 //
-// If there are two headers differing only in capitalization, the Channel returns the first value.
+// If there are more than one headers differing only in capitalization, the Channel returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) Channel() string {
 	for k, v := range h {
@@ -178,7 +178,7 @@ func (h Headers) Channel() string {
 // The default value is false.
 // If the header value is not presented, the IsDryRun returns the default value.
 //
-// If there are two headers differing only in capitalization, the IsDryRun returns the first value.
+// If there are more than one headers differing only in capitalization, the IsDryRun returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) IsDryRun() bool {
 	for k, v := range h {
@@ -192,7 +192,7 @@ func (h Headers) IsDryRun() bool {
 // Origin returns the 'origin' header value if it is presented.
 // If the header value is not presented, the Origin returns the empty string.
 //
-// If there are two headers differing only in capitalization, the Origin returns the first value.
+// If there are more than one headers differing only in capitalization, the Origin returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) Origin() string {
 	for k, v := range h {
@@ -206,7 +206,7 @@ func (h Headers) Origin() string {
 // Originator returns the 'ditto-originator' header value if it is presented.
 // If the header value is not presented, the Originator returns the empty string.
 //
-// If there are two headers differing only in capitalization, the Originator returns the first value.
+// If there are more than one headers differing only in capitalization, the Originator returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) Originator() string {
 	for k, v := range h {
@@ -220,7 +220,7 @@ func (h Headers) Originator() string {
 // ETag returns the 'etag' header value if it is presented.
 // If the header value is not presented, the ETag returns the empty string.
 //
-// If there are two headers differing only in capitalization, the ETag returns the first value.
+// If there are more than one headers differing only in capitalization, the ETag returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) ETag() string {
 	for k, v := range h {
@@ -234,7 +234,7 @@ func (h Headers) ETag() string {
 // IfMatch returns the 'if-match' header value if it is presented.
 // If the header value is not presented, the IfMatch returns the empty string.
 //
-// If there are two headers differing only in capitalization, the IfMatch returns the first value.
+// If there are more than one headers differing only in capitalization, the IfMatch returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) IfMatch() string {
 	for k, v := range h {
@@ -248,7 +248,7 @@ func (h Headers) IfMatch() string {
 // IfNoneMatch returns the 'if-none-match' header value if it is presented.
 // If the header value is not presented, the IfNoneMatch returns the empty string.
 //
-// If there are two headers differing only in capitalization, the IfNoneMatch returns the first value.
+// If there are more than one headers differing only in capitalization, the IfNoneMatch returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) IfNoneMatch() string {
 	for k, v := range h {
@@ -262,7 +262,7 @@ func (h Headers) IfNoneMatch() string {
 // ReplyTarget returns the 'ditto-reply-target' header value if it is presented.
 // If the header value is not presented, the ReplyTarget returns 0.
 //
-// If there are two headers differing only in capitalization, the ReplyTarget returns the first value.
+// If there are more than one headers differing only in capitalization, the ReplyTarget returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) ReplyTarget() int64 {
 	for k, v := range h {
@@ -276,7 +276,7 @@ func (h Headers) ReplyTarget() int64 {
 // ReplyTo returns the 'reply-to' header value if it is presented.
 // If the header value is not presented, the ReplyTo returns the empty string.
 //
-// If there are two headers differing only in capitalization, the ReplyTo returns the first value.
+// If there are more than one headers differing only in capitalization, the ReplyTo returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) ReplyTo() string {
 	for k, v := range h {
@@ -290,7 +290,7 @@ func (h Headers) ReplyTo() string {
 // Version returns the 'version' header value if it is presented.
 // If the header value is not presented, the Version returns 2.
 //
-// If there are two headers differing only in capitalization, the Version returns the first value.
+// If there are more than one headers differing only in capitalization, the Version returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) Version() int64 {
 	for k, v := range h {
@@ -304,7 +304,7 @@ func (h Headers) Version() int64 {
 // ContentType returns the 'content-type' header value if it is presented.
 // If the header value is not presented, the ContentType returns the empty string.
 //
-// If there are two headers differing only in capitalization, the ContentType returns the first value.
+// If there are more than one headers differing only in capitalization, the ContentType returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) ContentType() string {
 	for k, v := range h {
@@ -316,9 +316,9 @@ func (h Headers) ContentType() string {
 }
 
 // Generic returns the first value of the provided key header. Capitalization of header names does not affect the header map.
-// If there are no provided value, Generic returns nil.
+// If there are no provided value, the Generic returns nil.
 //
-// If there are two headers differing only in capitalization Generic returns the first value.
+// If there are more than one headers differing only in capitalization Generic returns the first met value.
 // To use the provided key to get the value, access the map directly.
 func (h Headers) Generic(id string) interface{} {
 	for k, v := range h {
@@ -326,27 +326,6 @@ func (h Headers) Generic(id string) interface{} {
 			return v
 		}
 	}
-	return nil
-}
-
-// UnmarshalJSON unmarshels Headers.
-//
-// The header names are case-insensitive and case-preserving.
-// If there is the same header name as the provided and the difference is
-// in capitalization the new header name will be set.
-func (h *Headers) UnmarshalJSON(data []byte) error {
-	temp := make(map[string]interface{})
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-	for k := range temp {
-		for k1 := range *h {
-			if strings.EqualFold(k, k1) {
-				delete(*h, k1)
-			}
-		}
-	}
-	*h = temp
 	return nil
 }
 
