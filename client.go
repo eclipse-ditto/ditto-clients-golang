@@ -29,15 +29,8 @@ var (
 	ErrUnsubscribeTimeout = errors.New("unsubscribe timeout")
 )
 
-// Handler represents a callback handler that is called on each received message.
-// If the underlying transport (e.g. Hono) provides a special requestID related to the Envelope,
-// it's also provided to the handler so that chained responses to the ID can be later sent properly.
-type Handler func(requestID string, message *protocol.Envelope)
-
-// Client is the Ditto's library actual client's implementation.
-// It provides the connect/disconnect capabilities along with the options to subscribe/unsubscribe
-// for receiving all Ditto messages being exchanged using the underlying transport (MQTT/WS).
-type Client struct {
+// client is the Ditto's library actual Client's implementation.
+type client struct {
 	cfg                *Configuration
 	pahoClient         MQTT.Client
 	handlers           map[string]Handler
@@ -47,12 +40,12 @@ type Client struct {
 }
 
 // NewClient creates a new Client instance with the provided Configuration.
-func NewClient(cfg *Configuration) *Client {
+func NewClient(cfg *Configuration) Client {
 	if cfg.tlsConfig != nil {
 		initCipherSutesMinVersion(cfg.tlsConfig)
 	}
 
-	client := &Client{
+	client := &client{
 		cfg:      cfg,
 		handlers: map[string]Handler{},
 	}
@@ -70,7 +63,7 @@ func NewClient(cfg *Configuration) *Client {
 // regarded as invalid ones.
 //
 // Returns an error if the provided MQTT client is not connected or the Configuration contains invalid fields.
-func NewClientMQTT(mqttClient MQTT.Client, cfg *Configuration) (*Client, error) {
+func NewClientMQTT(mqttClient MQTT.Client, cfg *Configuration) (Client, error) {
 	if !mqttClient.IsConnected() {
 		return nil, errors.New("MQTT client is not connected")
 	}
@@ -79,7 +72,7 @@ func NewClientMQTT(mqttClient MQTT.Client, cfg *Configuration) (*Client, error) 
 		return nil, err
 	}
 
-	client := &Client{
+	client := &client{
 		cfg:                cfg,
 		pahoClient:         mqttClient,
 		externalMQTTClient: true,
@@ -97,7 +90,7 @@ func NewClientMQTT(mqttClient MQTT.Client, cfg *Configuration) (*Client, error) 
 // The Client will be functional once this method returns without error. However, for consistency, if
 // there is a provided ConnectHandler, it will be notified.
 // In the case of an external MQTT client, if any error occurs during the internal preparations - it's returned here.
-func (client *Client) Connect() error {
+func (client *client) Connect() error {
 	if client.externalMQTTClient {
 		client.wgConnectHandler.Add(1)
 
@@ -144,7 +137,7 @@ func (client *Client) Connect() error {
 // Disconnect in the case of an external MQTT client, only undoes internal preparations, otherwise - it also disconnects
 // the client from the configured Ditto endpoint. A call to Disconnect will cause a ConnectionLostHandler to be notified
 // only if an external MQTT client is used.
-func (client *Client) Disconnect() {
+func (client *client) Disconnect() {
 	var err error
 	token := client.pahoClient.Unsubscribe(honoMQTTTopicSubscribeCommands)
 	if token.WaitTimeout(client.cfg.unsubscribeTimeout) {
@@ -171,7 +164,7 @@ func (client *Client) Disconnect() {
 // Reply is an auxiliary method to send replies for specific requestIDs if such has been provided along with the incoming protocol.Envelope.
 // The requestID must be the same as the one provided with the request protocol.Envelope.
 // An error is returned if the reply could not be sent for some reason.
-func (client *Client) Reply(requestID string, message *protocol.Envelope) error {
+func (client *client) Reply(requestID string, message *protocol.Envelope) error {
 	if err := client.publish(generateHonoResponseTopic(requestID, message.Status), message, 1, false); err != nil {
 		return err
 	}
@@ -179,7 +172,7 @@ func (client *Client) Reply(requestID string, message *protocol.Envelope) error 
 }
 
 // Send sends a protocol.Envelope to the Client's configured Ditto endpoint.
-func (client *Client) Send(message *protocol.Envelope) error {
+func (client *client) Send(message *protocol.Envelope) error {
 	if err := client.publish(honoMQTTTopicPublishEvents, message, 1, false); err != nil {
 		return err
 	}
@@ -188,7 +181,7 @@ func (client *Client) Send(message *protocol.Envelope) error {
 
 // Subscribe ensures that all incoming Ditto messages will be transferred to the provided Handlers.
 // As subscribing in Ditto is transport-specific - this is a lightweight version of a default subscription that is applicable in the MQTT use case.
-func (client *Client) Subscribe(handlers ...Handler) {
+func (client *client) Subscribe(handlers ...Handler) {
 	client.handlersLock.Lock()
 	defer client.handlersLock.Unlock()
 
@@ -204,7 +197,7 @@ func (client *Client) Subscribe(handlers ...Handler) {
 // Unsubscribe cancels sending incoming Ditto messages from the client to the provided Handlers
 // and removes them from the subscriptions list of the client.
 // If Unsubscribe is called without arguments, it will cancel and remove all currently subscribed Handlers.
-func (client *Client) Unsubscribe(handlers ...Handler) {
+func (client *client) Unsubscribe(handlers ...Handler) {
 	client.handlersLock.Lock()
 	defer client.handlersLock.Unlock()
 

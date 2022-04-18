@@ -290,7 +290,7 @@ func TestCredentials(t *testing.T) {
 }
 
 func TestConnectHandler(t *testing.T) {
-	var mockFunction = func(client *Client) {}
+	var mockFunction = func(client Client) {}
 
 	tests := map[string]struct {
 		testConfiguration *Configuration
@@ -318,7 +318,7 @@ func TestConnectHandler(t *testing.T) {
 }
 
 func TestConnectionLostHandler(t *testing.T) {
-	var mockFunction = func(client *Client, err error) {}
+	var mockFunction = func(client Client, err error) {}
 
 	tests := map[string]struct {
 		testConfiguration *Configuration
@@ -491,7 +491,7 @@ func TestWitWithCredentials(t *testing.T) {
 }
 
 func TestWithConnectHandler(t *testing.T) {
-	arg := func(clint *Client) {}
+	arg := func(client Client) {}
 
 	testConfiguration := &Configuration{}
 
@@ -505,7 +505,7 @@ func TestWithConnectHandler(t *testing.T) {
 }
 
 func TestWithConnectionLostHandler(t *testing.T) {
-	arg := func(client *Client, err error) {}
+	arg := func(client Client, err error) {}
 
 	testConfiguration := &Configuration{}
 

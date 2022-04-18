@@ -49,7 +49,7 @@ func TestHonoMessageHandlingSuccess(t *testing.T) {
 	mockMQTTMessage.EXPECT().Topic().Return(topic)
 
 	unitUnderTest.Subscribe(handler)
-	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
+	unitUnderTest.(*client).honoMessageHandler(nil, mockMQTTMessage)
 
 	internal.AssertWithTimeout(t, &wg, 5)
 }
@@ -71,7 +71,7 @@ func TestHonoInvalidMesssageHandling(t *testing.T) {
 	mockMQTTMessage.EXPECT().Payload().Return(invalidJSON)
 
 	unitUnderTest.Subscribe(handler)
-	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
+	unitUnderTest.(*client).honoMessageHandler(nil, mockMQTTMessage)
 }
 
 func TestHonoWithoutHandlersDoesNotPanic(t *testing.T) {
@@ -82,7 +82,7 @@ func TestHonoWithoutHandlersDoesNotPanic(t *testing.T) {
 
 	unitUnderTest := NewClient(&Configuration{})
 
-	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
+	unitUnderTest.(*client).honoMessageHandler(nil, mockMQTTMessage)
 }
 
 func TestHonoMultipleHanlders(t *testing.T) {
@@ -117,7 +117,7 @@ func TestHonoMultipleHanlders(t *testing.T) {
 	unitUnderTest.Subscribe(handlerOne)
 	unitUnderTest.Subscribe(handlerTwo)
 
-	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
+	unitUnderTest.(*client).honoMessageHandler(nil, mockMQTTMessage)
 
 	internal.AssertWithTimeout(t, &wg, 5)
 }
@@ -154,7 +154,7 @@ func TestHonoAddMultipleHanlders(t *testing.T) {
 
 	unitUnderTest.Subscribe(handlerOne, handlerTwo)
 
-	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
+	unitUnderTest.(*client).honoMessageHandler(nil, mockMQTTMessage)
 
 	internal.AssertWithTimeout(t, &wg, 5)
 }
@@ -185,7 +185,7 @@ func TestRemoveAllHanlders(t *testing.T) {
 
 	unitUnderTest.Unsubscribe()
 
-	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
+	unitUnderTest.(*client).honoMessageHandler(nil, mockMQTTMessage)
 
 }
 
@@ -222,7 +222,7 @@ func TestRemoveSingleHanlder(t *testing.T) {
 
 	unitUnderTest.Unsubscribe(handlerTwo)
 
-	unitUnderTest.honoMessageHandler(nil, mockMQTTMessage)
+	unitUnderTest.(*client).honoMessageHandler(nil, mockMQTTMessage)
 	internal.AssertWithTimeout(t, &wg, 5)
 }
 

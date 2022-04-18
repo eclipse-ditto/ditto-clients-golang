@@ -16,11 +16,11 @@ import (
 	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
 
-func (client *Client) defaultMessageHandler(mqttClient MQTT.Client, message MQTT.Message) {
+func (client *client) defaultMessageHandler(mqttClient MQTT.Client, message MQTT.Message) {
 	DEBUG.Printf("unexpected message received: %v", message)
 }
 
-func (client *Client) honoMessageHandler(mqttClient MQTT.Client, message MQTT.Message) {
+func (client *client) honoMessageHandler(mqttClient MQTT.Client, message MQTT.Message) {
 	DEBUG.Printf("received message for client subscription: %v", message)
 	// wait for handlers added in the ConnectHandler
 	client.wgConnectHandler.Wait()
