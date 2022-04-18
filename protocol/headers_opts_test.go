@@ -141,102 +141,344 @@ func TestNewHeadersFrom(t *testing.T) {
 }
 
 func TestWithCorrelationID(t *testing.T) {
-	t.Run("TestWithCorrelationID", func(t *testing.T) {
-		cid := "correlationId"
+	tests := map[string]struct {
+		testHeader Headers
+		arg        string
+	}{
+		"test_change_existing_correlation_id": {
+			testHeader: Headers{HeaderCorrelationID: "correlation-id"},
+			arg:        "new-correlation-id",
+		},
+		"test_change_first_met_correlation_id": {
+			testHeader: Headers{
+				"Correlation-ID": "correlation-id-1",
+				"CORRELATION-ID": "correlation-id-2",
+			},
+			arg: "correlation-id-3",
+		},
+		"test_set_new_correation_id": {
+			testHeader: NewHeaders(),
+			arg:        "new-correlation-id",
+		},
+	}
 
-		got := NewHeaders(WithCorrelationID(cid))
-		internal.AssertEqual(t, cid, got.CorrelationID())
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithCorrelationID(testCase.arg))
+			want, _ := got.CorrelationID()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithReplyTo(t *testing.T) {
-	t.Run("TestWithReplyTo", func(t *testing.T) {
-		rto := "replyto"
+	tests := map[string]struct {
+		testHeader Headers
+		arg        string
+	}{
+		"test_change_existing_reply_to": {
+			testHeader: Headers{HeaderReplyTo: "reply-to"},
+			arg:        "new-reply-to",
+		},
+		"test_change_first_met_reply-to": {
+			testHeader: Headers{
+				"Reply-To": "reply-to-1",
+				"REPLY-TO": "reply-to-2",
+			},
+			arg: "reply-to-3",
+		},
+		"test_set_new_reply-to": {
+			testHeader: NewHeaders(),
+			arg:        "new-reply-to",
+		},
+	}
 
-		got := NewHeaders(WithReplyTo(rto))
-		internal.AssertEqual(t, rto, got.ReplyTo())
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithReplyTo(testCase.arg))
+			want := got.ReplyTo()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithReplyTarget(t *testing.T) {
-	t.Run("TestWithReplyTarget", func(t *testing.T) {
-		rt := "11111"
+	tests := map[string]struct {
+		testHeader Headers
+		arg        int64
+	}{
+		"test_change_existing_ditto_reply_target": {
+			testHeader: Headers{HeaderReplyTarget: 1},
+			arg:        2,
+		},
+		"test_change_first_met_ditto_reply_target": {
+			testHeader: Headers{
+				"Ditto-Reply-Target": 1,
+				"DITTO-REPLY-TARGET": 2,
+			},
+			arg: 3,
+		},
+		"test_set_new_reply-target": {
+			testHeader: NewHeaders(),
+			arg:        1,
+		},
+	}
 
-		got := NewHeaders(WithReplyTarget(rt))
-		internal.AssertEqual(t, rt, got[HeaderReplyTarget])
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithReplyTarget(testCase.arg))
+			want := got.ReplyTarget()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithChannel(t *testing.T) {
-	t.Run("TestWithChannel", func(t *testing.T) {
-		cha := "channel"
+	tests := map[string]struct {
+		testHeader Headers
+		arg        string
+	}{
+		"test_change_existing_ditto_channel": {
+			testHeader: Headers{HeaderChannel: "test-ditto-channel"},
+			arg:        "new-ditto-channel",
+		},
+		"test_change_first_met_ditto_channel": {
+			testHeader: Headers{
+				"Ditto-Channel": "test-ditto-channel-1",
+				"DITTO-CHANNEL": "test-ditto-channel-2",
+			},
+			arg: "test-ditto-channel-3",
+		},
+		"test_set_new_ditto-channel": {
+			testHeader: NewHeaders(),
+			arg:        "test-ditto-channel",
+		},
+	}
 
-		got := NewHeaders(WithChannel(cha))
-		internal.AssertEqual(t, cha, got.Channel())
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithChannel(testCase.arg))
+			want := got.Channel()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithResponseRequired(t *testing.T) {
-	t.Run("TestWithResponseRequired", func(t *testing.T) {
-		rrq := true
+	tests := map[string]struct {
+		testHeader Headers
+		arg        bool
+	}{
+		"test_change_existing_response_required": {
+			testHeader: Headers{HeaderResponseRequired: true},
+			arg:        false,
+		},
+		"test_change_first_met_response_required": {
+			testHeader: Headers{
+				"Response-Required": true,
+				"RESPONSE-REQUIRED": true,
+			},
+			arg: false,
+		},
+		"test_set_new_response_required": {
+			testHeader: NewHeaders(),
+			arg:        false,
+		},
+	}
 
-		got := NewHeaders(WithResponseRequired(rrq))
-		internal.AssertEqual(t, rrq, got.IsResponseRequired())
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithResponseRequired(testCase.arg))
+			want := got.IsResponseRequired()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithOriginator(t *testing.T) {
-	t.Run("TestWithOriginator", func(t *testing.T) {
-		org := "originator"
+	tests := map[string]struct {
+		testHeader Headers
+		arg        string
+	}{
+		"test_change_existing_ditto_originator": {
+			testHeader: Headers{HeaderOriginator: "test-ditto-originator"},
+			arg:        "new-ditto-originator",
+		},
+		"test_change_first_met_ditto_originator": {
+			testHeader: Headers{
+				"Ditto-Originator": "ditto-originator-1",
+				"DITTO-ORIGINATOR": "ditto-originator-2",
+			},
+			arg: "ditto-originator-3",
+		},
+		"test_set_new_ditto_originator": {
+			testHeader: NewHeaders(),
+			arg:        "test-ditto-originator",
+		},
+	}
 
-		got := NewHeaders(WithOriginator(org))
-		internal.AssertEqual(t, org, got.Originator())
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithOriginator(testCase.arg))
+			want := got.Originator()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithOrigin(t *testing.T) {
-	t.Run("TestWithOrigin", func(t *testing.T) {
-		org := "origin"
+	tests := map[string]struct {
+		testHeader Headers
+		arg        string
+	}{
+		"test_change_existing_origin": {
+			testHeader: Headers{HeaderOrigin: "test-origin"},
+			arg:        "new-origin",
+		},
+		"test_change_first_met_origin": {
+			testHeader: Headers{
+				"Origin": "origin-1",
+				"ORIGIN": "origin-2",
+			},
+			arg: "origin-3",
+		},
+		"test_set_new_origin": {
+			testHeader: NewHeaders(),
+			arg:        "test-origin",
+		},
+	}
 
-		got := NewHeaders(WithOrigin(org))
-		internal.AssertEqual(t, org, got.Origin())
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithOrigin(testCase.arg))
+			want := got.Origin()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithDryRun(t *testing.T) {
-	t.Run("TestWithDryRun", func(t *testing.T) {
-		dry := true
+	tests := map[string]struct {
+		testHeader Headers
+		arg        bool
+	}{
+		"test_change_existing_dry_run": {
+			testHeader: Headers{HeaderDryRun: true},
+			arg:        false,
+		},
+		"test_change_first_met_dry_run": {
+			testHeader: Headers{
+				"Dry-Run": true,
+				"DRY-RUN": true,
+			},
+			arg: false,
+		},
+		"test_set_new_dry_run": {
+			testHeader: NewHeaders(),
+			arg:        true,
+		},
+	}
 
-		got := NewHeaders(WithDryRun(dry))
-		internal.AssertEqual(t, dry, got.IsDryRun())
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithDryRun(testCase.arg))
+			want := got.IsDryRun()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithETag(t *testing.T) {
-	t.Run("TestWithETag", func(t *testing.T) {
-		et := "etag"
+	tests := map[string]struct {
+		testHeader Headers
+		arg        string
+	}{
+		"test_change_existing_etag": {
+			testHeader: Headers{HeaderETag: "test-etag"},
+			arg:        "new-etag",
+		},
+		"test_change_first_met_etag": {
+			testHeader: Headers{
+				"ETag": "etag-1",
+				"ETAG": "etag-2",
+			},
+			arg: "etag-3",
+		},
+		"test_set_new_etag": {
+			testHeader: NewHeaders(),
+			arg:        "test-etag",
+		},
+	}
 
-		got := NewHeaders(WithETag(et))
-		internal.AssertEqual(t, et, got.ETag())
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithETag(testCase.arg))
+			want := got.ETag()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithIfMatch(t *testing.T) {
-	t.Run("TestWithIfMatch", func(t *testing.T) {
-		im := "ifMatch"
+	tests := map[string]struct {
+		testHeader Headers
+		arg        string
+	}{
+		"test_change_existing_if_match": {
+			testHeader: Headers{HeaderIfMatch: "test-if-match"},
+			arg:        "new-if-match",
+		},
+		"test_change_first_met_if_match": {
+			testHeader: Headers{
+				"If-Match": "if-match-1",
+				"IF-MATCH": "if-match-2",
+			},
+			arg: "if-match-3",
+		},
+		"test_set_new_if_match": {
+			testHeader: NewHeaders(),
+			arg:        "test-if-match",
+		},
+	}
 
-		got := NewHeaders(WithIfMatch(im))
-		internal.AssertEqual(t, im, got.IfMatch())
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithIfMatch(testCase.arg))
+			want := got.IfMatch()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithIfNoneMatch(t *testing.T) {
-	t.Run("TestWithIfNoneMatch", func(t *testing.T) {
-		inm := "ifNoneMatch"
+	tests := map[string]struct {
+		testHeader Headers
+		arg        string
+	}{
+		"test_change_existing_if_none_match": {
+			testHeader: Headers{HeaderIfNoneMatch: "test-if-none-match"},
+			arg:        "new-if-none-match",
+		},
+		"test_change_first_met_if_none_match": {
+			testHeader: Headers{
+				"If-None-Match": "if-none-match-1",
+				"IF-NONE-MATCH": "if-none-match-2",
+			},
+			arg: "if-none-match-3",
+		},
+		"test_set_new_if_none_match": {
+			testHeader: NewHeaders(),
+			arg:        "test-if_none_match",
+		},
+	}
 
-		got := NewHeaders(WithIfNoneMatch(inm))
-		internal.AssertEqual(t, inm, got.IfNoneMatch())
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithIfNoneMatch(testCase.arg))
+			want := got.IfNoneMatch()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithTimeout(t *testing.T) {
@@ -275,21 +517,65 @@ func TestWithTimeout(t *testing.T) {
 }
 
 func TestWithSchemaVersion(t *testing.T) {
-	t.Run("TestWithSchemaVersion", func(t *testing.T) {
-		sv := "123456789"
+	tests := map[string]struct {
+		testHeader Headers
+		arg        int64
+	}{
+		"test_change_existing_version": {
+			testHeader: Headers{HeaderVersion: 1},
+			arg:        int64(2),
+		},
+		"test_change_first_met_version": {
+			testHeader: Headers{
+				"Version": 0,
+				"VERSION": int64(1),
+			},
+			arg: 2,
+		},
+		"test_set_new_etag": {
+			testHeader: NewHeaders(),
+			arg:        int64(2),
+		},
+	}
 
-		got := NewHeaders(WithSchemaVersion("123456789"))
-		internal.AssertEqual(t, sv, got[HeaderSchemaVersion])
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithVersion(testCase.arg))
+			want := got.Version()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithContentType(t *testing.T) {
-	t.Run("TestWithContentType", func(t *testing.T) {
-		hct := "contentType"
+	tests := map[string]struct {
+		testHeader Headers
+		arg        string
+	}{
+		"test_change_existing_content_type": {
+			testHeader: Headers{HeaderContentType: "test-content-type"},
+			arg:        "new-content-type",
+		},
+		"test_change_first_met_content_type": {
+			testHeader: Headers{
+				"Content-Type": "content-type-1",
+				"CONTENT-TYPE": "content-type-2",
+			},
+			arg: "content-type-3",
+		},
+		"test_set_new_content_type": {
+			testHeader: NewHeaders(),
+			arg:        "test-content-type",
+		},
+	}
 
-		got := NewHeaders(WithContentType(hct))
-		internal.AssertEqual(t, hct, got.ContentType())
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := NewHeadersFrom(testCase.testHeader, WithContentType(testCase.arg))
+			want := got.ContentType()
+			internal.AssertEqual(t, testCase.arg, want)
+		})
+	}
 }
 
 func TestWithGeneric(t *testing.T) {
