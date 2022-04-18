@@ -773,7 +773,7 @@ func TestHeadersVersion(t *testing.T) {
 		"test_same_version_invalid_value": {
 			testHeader: Headers{
 				HeaderVersion: "1",
-				"VERSION":           int64(1),
+				"VERSION":     int64(1),
 			},
 			valueInMap: "1",
 			want:       int64(2),
@@ -781,7 +781,7 @@ func TestHeadersVersion(t *testing.T) {
 		"test_same_version_valid_value": {
 			testHeader: Headers{
 				HeaderVersion: int64(1),
-				"VERSION":           int64(2),
+				"VERSION":     int64(2),
 			},
 			valueInMap: int64(1),
 			want:       int64(1),
