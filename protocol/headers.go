@@ -83,35 +83,39 @@ const (
 // See https://www.eclipse.org/ditto/protocol-specification.html
 type Headers map[string]interface{}
 
-// CorrelationID returns the 'correlation-id' header value if it is presented and true if the type is string.
-// CorrelationID returns an empty string and false if the header is presented, but the type is not a string.
+// CorrelationID returns the HeaderCorrelationID header value if it is presented.
 //
-// If the header value is not presented, the 'correlation-id' header value will be generated in UUID format.
+// If there is no HeaderCorrelationID value, but there is at least one value which key differs only in capitalization,
+// the CorrelationID returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the CorrelationID returns the first met value.
-// To use the provided key to get the value, access the map directly.
-func (h Headers) CorrelationID() (string, bool) {
+// If there is no match about for this header, the CorrelationID will generate HeaderCorrelationID value in UUID format.
+//
+// If the type of the HeaderCorrelationID header (or the first met header) is not a string, the CorrelationID returns the empty string.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
+func (h Headers) CorrelationID() string {
 	if value, ok := h[HeaderCorrelationID]; ok {
-		return h.stringValue(value, "")
+		return getStr(value, "")
 	}
 	keys := sortHeadersKey(h)
 	for _, k := range keys {
 		if strings.EqualFold(k, HeaderCorrelationID) {
-			return h.stringValue(h[k], "")
+			return getStr(h[k], "")
 		}
 	}
 	h[HeaderCorrelationID] = uuid.New().String()
-	return h[HeaderCorrelationID].(string), true
+	return h[HeaderCorrelationID].(string)
 }
 
-// Timeout returns the 'timeout' header value if it is presented.
+// Timeout returns the HeaderTimeout header value if it is presented.
 // The default and maximum value is duration of 60 seconds.
 //
-// If the header value is not presented, the Timout returns the default value.
-// If the header value is presented, but the type is not a string or the value is not valid, the Timeout returns the default value.
+// If there is no HeaderTimeout value, but there is at least one value which key differs only in capitalization,
+// the Timeout returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the Timeout returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderTimeout header (or the first met header) is not a string, the Timeout returns the default value.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) Timeout() time.Duration {
 	if value, ok := h[HeaderTimeout]; ok {
 		return h.timeoutValue(value)
@@ -125,14 +129,16 @@ func (h Headers) Timeout() time.Duration {
 	return 60 * time.Second
 }
 
-// IsResponseRequired returns the 'response-required' header value if it is presented.
+// IsResponseRequired returns the HeaderResponseRequired header value if it is presented.
 // The default value is true.
 //
-// If the header value is not presented, the IsResponseRequired returns the default value.
-// If the header value is presented, but the type is not a bool, the IsResponseRequired returns the default value.
+// If there is no HeaderResponseRequired value, but there is at least one value which key differs only in capitalization,
+// the IsResponseRequired returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the IsResponseRequired returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderResponseRequired header (or the first met header) is not a bool, the IsResponseRequired
+// returns the default value.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) IsResponseRequired() bool {
 	if value, ok := h[HeaderResponseRequired]; ok {
 		return h.boolValue(value, true)
@@ -146,36 +152,28 @@ func (h Headers) IsResponseRequired() bool {
 	return true
 }
 
-// Channel returns the 'ditto-channel' header value.
+// Channel returns the HeaderChannel header value.
 //
-// If the header value is not presented, the Channel returns the empty string.
-// If the header value is presented, but the type is not a string, the Cannel returns the empty string.
+// If there is no HeaderChannel value, but there is at least one value which key differs only in capitalization,
+// the Channel returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the Channel returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderChannel header (or the first met header) is not a string, the Channel returns the empty string.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) Channel() string {
-	if value, ok := h[HeaderChannel]; ok {
-		str, _ := h.stringValue(value, "")
-		return str
-	}
-	keys := sortHeadersKey(h)
-	for _, k := range keys {
-		if strings.EqualFold(k, HeaderChannel) {
-			str, _ := h.stringValue(h[k], "")
-			return str
-		}
-	}
-	return ""
+	return h.stringValue(HeaderChannel, "")
+
 }
 
-// IsDryRun returns the 'ditto-dry-run' header value if it is presented.
+// IsDryRun returns the HeaderDryRun header value if it is presented.
 // The default value is false.
 //
-// If the header value is not presented, the IsDryRun returns the default value.
-// If the header value is presented, but the type is not a bool, the IsDryRun returns the default value.
+// If there is no HeaderDryRun value, but there is at least one value which key differs only in capitalization,
+// the IsDryRun returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the IsDryRun returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderDryRun header (or the first met header) is not a bool, the IsDryRun returns the default value.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) IsDryRun() bool {
 	if value, ok := h[HeaderDryRun]; ok {
 		return h.boolValue(value, false)
@@ -189,124 +187,79 @@ func (h Headers) IsDryRun() bool {
 	return false
 }
 
-// Origin returns the 'origin' header value if it is presented.
+// Origin returns the HeaderOrigin header value if it is presented.
 //
-// If the header value is not presented, the Origin returns the empty string.
-// If the header value is presented, but the value is not a string, the Origin returns the empty string.
+// If there is no HeaderOrigin value, but there is at least one value which key differs only in capitalization,
+// the Origin returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the Origin returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderOrigin header (or the first met header) is not a string, the Origin returns the empty string.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) Origin() string {
-	if value, ok := h[HeaderOrigin]; ok {
-		str, _ := h.stringValue(value, "")
-		return str
-	}
-	keys := sortHeadersKey(h)
-	for _, k := range keys {
-		if strings.EqualFold(k, HeaderOrigin) {
-			str, _ := h.stringValue(h[k], "")
-			return str
-		}
-	}
-	return ""
+	return h.stringValue(HeaderOrigin, "")
+
 }
 
-// Originator returns the 'ditto-originator' header value if it is presented.
+// Originator returns the HeaderOriginator header value if it is presented.
 //
-// If the header value is not presented, the Originator returns the empty string.
-// If the header value is presented, but the type is not a string, the Originator returns the empty string.
+// If there is no HeaderOriginator value, but there is at least one value which key differs only in capitalization,
+// the Originator returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the Originator returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderOriginator header (or the first met header) is not a string, the Originator returns the empty string.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) Originator() string {
-	if value, ok := h[HeaderOriginator]; ok {
-		str, _ := h.stringValue(value, "")
-		return str
-	}
-	keys := sortHeadersKey(h)
-	for _, k := range keys {
-		if strings.EqualFold(k, HeaderOriginator) {
-			str, _ := h.stringValue(h[k], "")
-			return str
-		}
-	}
-	return ""
+	return h.stringValue(HeaderOriginator, "")
+
 }
 
-// ETag returns the 'etag' header value if it is presented.
+// ETag returns the HeaderETag header value if it is presented.
 //
-// If the header value is not presented, the ETag returns the empty string.
-// If the header value is presented, but the type is not a string, the ETag returns the empty string.
+// If there is no HeaderETag value, but there is at least one value which key differs only in capitalization,
+// the ETag returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers for 'etag' differing only in capitalization
-// the ETag returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderETag header (or the first met header) is not a string, the ETag returns the empty string.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) ETag() string {
-	if value, ok := h[HeaderETag]; ok {
-		str, _ := h.stringValue(value, "")
-		return str
-	}
-	keys := sortHeadersKey(h)
-	for _, k := range keys {
-		if strings.EqualFold(k, HeaderETag) {
-			str, _ := h.stringValue(h[k], "")
-			return str
-		}
-	}
-	return ""
+	return h.stringValue(HeaderETag, "")
+
 }
 
-// IfMatch returns the 'if-match' header value if it is presented.
+// IfMatch returns the HeaderIfMatch header value if it is presented.
 //
-// If the header value is not presented, the IfMatch returns the empty string.
-// If the header value is presented, but the type is not a string, the IfMatch returns the empty string.
+// If there is no HeaderIfMatch value, but there is at least one value which key differs only in capitalization,
+// the IfMatch returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the IfMatch returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderIfMatch header (or the first met header) is not a string, the IfMatch returns the empty string.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) IfMatch() string {
-	if value, ok := h[HeaderIfMatch]; ok {
-		str, _ := h.stringValue(value, "")
-		return str
-	}
-	keys := sortHeadersKey(h)
-	for _, k := range keys {
-		if strings.EqualFold(k, HeaderIfMatch) {
-			str, _ := h.stringValue(h[k], "")
-			return str
-		}
-	}
-	return ""
+	return h.stringValue(HeaderIfMatch, "")
+
 }
 
-// IfNoneMatch returns the 'if-none-match' header value if it is presented.
+// IfNoneMatch returns the HeaderIfNoneMatch header value if it is presented.
 //
-// If the header value is not presented, the IfNoneMatch returns the empty string.
-// If the header value is presented, but the type is not a string, the IfNonMatch returns the empty string.
+// If there is no HeaderIfNoneMatch value, but there is at least one value which key differs only in capitalization,
+// the IfNoneMatch returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the IfNoneMatch returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderIfNoneMatch header (or the first met header) is not a string, the IfNoneMatch returns the empty string.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) IfNoneMatch() string {
-	if value, ok := h[HeaderIfNoneMatch]; ok {
-		str, _ := h.stringValue(value, "")
-		return str
-	}
-	keys := sortHeadersKey(h)
-	for _, k := range keys {
-		if strings.EqualFold(k, HeaderIfNoneMatch) {
-			str, _ := h.stringValue(h[k], "")
-			return str
-		}
-	}
-	return ""
+	return h.stringValue(HeaderIfNoneMatch, "")
+
 }
 
-// ReplyTarget returns the 'ditto-reply-target' header value if it is presented.
+// ReplyTarget returns the HeaderReplyTarget header value if it is presented.
 //
-// If the header value is not presented, the ReplyTarget returns 0.
-// If the header value is presented, but the type is not an int64, the ReplyTarget returns 0.
+// If there is no HeaderReplyTarget value, but there is at least one value which key differs only in capitalization,
+// the ReplyTarget returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the ReplyTarget returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderReplyTarget header (or the first met header) is not an int64, the ReplyTarget returns 0.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) ReplyTarget() int64 {
 	if value, ok := h[HeaderReplyTarget]; ok {
 		return h.intValue(value, 0)
@@ -320,36 +273,27 @@ func (h Headers) ReplyTarget() int64 {
 	return 0
 }
 
-// ReplyTo returns the 'reply-to' header value if it is presented.
+// ReplyTo returns the HeaderReplyTo header value if it is presented.
 //
-// If the header value is not presented, the ReplyTo returns the empty string.
-// If the header value is presented, but the type is not a sting, the ReplyTo returns the empty string.
+// If there is no HeaderReplyTo value, but there is at least one value which key differs only in capitalization,
+// the ReplyTo returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the ReplyTo returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderReplyTo header (or the first met header) is not a string, the ReplyTo returns the empty string.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) ReplyTo() string {
-	if value, ok := h[HeaderReplyTo]; ok {
-		str, _ := h.stringValue(value, "")
-		return str
-	}
-	keys := sortHeadersKey(h)
-	for _, k := range keys {
-		if strings.EqualFold(k, HeaderReplyTo) {
-			str, _ := h.stringValue(h[k], "")
-			return str
-		}
-	}
-	return ""
+	return h.stringValue(HeaderReplyTo, "")
 }
 
-// Version returns the 'version' header value if it is presented.
+// Version returns the HeaderVersion header value if it is presented.
 // The default value is 2.
 //
-// If the header value is not presented, the Version returns the default value.
-// If the header value is presented, but the type is not an int64, he Version returns the default value.
+// If there is no HeaderVersion value, but there is at least one value which key differs only in capitalization,
+// the Version returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the Version returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderVersion header (or the first met header) is not an int 64, the Version returns the default value.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) Version() int64 {
 	if value, ok := h[HeaderVersion]; ok {
 		return h.intValue(value, int64(2))
@@ -363,26 +307,16 @@ func (h Headers) Version() int64 {
 	return int64(2)
 }
 
-// ContentType returns the 'content-type' header value if it is presented.
+// ContentType returns the HeaderContentType header value if it is presented.
 //
-// If the header value is not presented, the ContentType returns the empty string.
-// If the header value is not presented, the ContentType returns the empty string.
+// If there is no HeaderContentType value, but there is at least one value which key differs only in capitalization,
+// the ContentType returns the value corresponding to the first such key(sorted in increasing order).
 //
-// If there are more than one headers differing only in capitalization, the ContentType returns the first met value.
-// To use the provided key to get the value, access the map directly.
+// If the type of the HeaderContentType header (or the first met header) is not a string, the ContentType returns the empty string.
+//
+// Use Generic or access the map directly to get a value to a specific key in regard to capitalization.
 func (h Headers) ContentType() string {
-	if value, ok := h[HeaderContentType]; ok {
-		str, _ := h.stringValue(value, "")
-		return str
-	}
-	keys := sortHeadersKey(h)
-	for _, k := range keys {
-		if strings.EqualFold(k, HeaderContentType) {
-			str, _ := h.stringValue(h[k], "")
-			return str
-		}
-	}
-	return ""
+	return h.stringValue(HeaderContentType, "")
 }
 
 // Generic returns the value of the provided key header.
@@ -390,25 +324,24 @@ func (h Headers) Generic(id string) interface{} {
 	return h[id]
 }
 
-// With sets new Headers to the existing.
-func (h Headers) With(opts ...HeaderOpt) Headers {
-	res := make(map[string]interface{})
-
-	for key, value := range h {
-		res[key] = value
+func (h Headers) stringValue(headerKey, defValue string) string {
+	if value, ok := h[headerKey]; ok {
+		return getStr(value, defValue)
 	}
-
-	if err := applyOptsHeader(res, opts...); err != nil {
-		return nil
+	keys := sortHeadersKey(h)
+	for _, k := range keys {
+		if strings.EqualFold(k, headerKey) {
+			return getStr(h[k], defValue)
+		}
 	}
-	return res
+	return defValue
 }
 
-func (h Headers) stringValue(headerValue interface{}, defValue string) (string, bool) {
-	if value, ok := headerValue.(string); ok {
-		return value, true
+func getStr(value interface{}, defValue string) string {
+	if str, ok := value.(string); ok {
+		return str
 	}
-	return defValue, false
+	return defValue
 }
 
 func (h Headers) timeoutValue(headerValue interface{}) time.Duration {
@@ -435,9 +368,11 @@ func (h Headers) boolValue(headerValue interface{}, defValue bool) bool {
 }
 
 func sortHeadersKey(h Headers) []string {
-	var keys []string
+	keys := make([]string, len(h))
+	i := 0
 	for k := range h {
-		keys = append(keys, k)
+		keys[i] = k
+		i++
 	}
 	sort.Strings(keys)
 	return keys

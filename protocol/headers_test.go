@@ -21,61 +21,56 @@ import (
 
 func TestHeadersCorrelationID(t *testing.T) {
 	tests := map[string]struct {
-		testHeader  Headers
-		want        string
-		isValidType bool
+		testHeader Headers
+		valueInMap interface{}
+		want       string
 	}{
 		"test_with_correlation_id": {
-			testHeader:  Headers{HeaderCorrelationID: "correlation-id"},
-			want:        "correlation-id",
-			isValidType: true,
+			testHeader: Headers{HeaderCorrelationID: "correlation-id"},
+			valueInMap: "correlation-id",
+			want:       "correlation-id",
 		},
 		"test_empty_correlation_id": {
-			testHeader:  Headers{HeaderCorrelationID: ""},
-			want:        "",
-			isValidType: true,
+			testHeader: Headers{HeaderCorrelationID: ""},
+			valueInMap: "",
+			want:       "",
 		},
 		"test_corrlation_id_number": {
-			testHeader:  Headers{HeaderCorrelationID: 1},
-			want:        "",
-			isValidType: false,
+			testHeader: Headers{HeaderCorrelationID: 1},
+			valueInMap: 1,
+			want:       "",
 		},
 		"test_same_corrlation_ids_invalid_value": {
 			testHeader: Headers{
 				HeaderCorrelationID: 1,
 				"CORRELATION-ID":    "test",
 			},
-			want:        "",
-			isValidType: false,
+			valueInMap: 1,
+			want:       "",
 		},
 		"test_same_corrlation_ids_valid_value": {
 			testHeader: Headers{
 				HeaderCorrelationID: "1",
 				"CORRELATION-ID":    "test",
 			},
-			want:        "1",
-			isValidType: true,
+			valueInMap: "1",
+			want:       "1",
 		},
 		"test_same_corrlation_ids": {
 			testHeader: Headers{
 				"correlation-ID": "1",
 				"CORRELATION-ID": "test",
 			},
-			want:        "test",
-			isValidType: true,
+			valueInMap: nil,
+			want:       "test",
 		},
 	}
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			got, ok := testCase.testHeader.CorrelationID()
+			got := testCase.testHeader.CorrelationID()
 			internal.AssertEqual(t, testCase.want, got)
-			if testCase.isValidType {
-				internal.AssertTrue(t, ok)
-			} else {
-				internal.AssertFalse(t, ok)
-				internal.AssertEqual(t, 1, testCase.testHeader[HeaderCorrelationID])
-			}
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderCorrelationID])
 		})
 	}
 }
@@ -954,8 +949,7 @@ func TestCaseInsensitiveKey(t *testing.T) {
 	envelope.WithHeaders(NewHeaders(WithGeneric("coRRelation-ID", "correlation-id-2")))
 
 	// return the first correlation-id (side effect from unmarshal JSON)
-	res, _ := envelope.Headers.CorrelationID()
-	internal.AssertEqual(t, "correlation-id-2", res)
+	internal.AssertEqual(t, "correlation-id-2", envelope.Headers.CorrelationID())
 
 	json.Marshal(envelope.Headers)
 

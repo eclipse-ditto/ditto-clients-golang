@@ -165,8 +165,7 @@ func TestWithCorrelationID(t *testing.T) {
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			got := NewHeadersFrom(testCase.testHeader, WithCorrelationID(testCase.arg))
-			want, _ := got.CorrelationID()
-			internal.AssertEqual(t, testCase.arg, want)
+			internal.AssertEqual(t, testCase.arg, got.CorrelationID())
 		})
 	}
 }
