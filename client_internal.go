@@ -28,7 +28,7 @@ const (
 	honoMQTTTopicPublishEvents     = "e"
 )
 
-func (client *client) clientConnectHandler(pahoClient MQTT.Client) {
+func (client *honoClient) clientConnectHandler(pahoClient MQTT.Client) {
 	client.wgConnectHandler.Add(1)
 	token := client.pahoClient.Subscribe(honoMQTTTopicSubscribeCommands, 1, client.honoMessageHandler)
 
@@ -45,7 +45,7 @@ func (client *client) clientConnectHandler(pahoClient MQTT.Client) {
 	client.notifyClientConnected()
 }
 
-func (client *client) notifyClientConnected() {
+func (client *honoClient) notifyClientConnected() {
 	defer client.wgConnectHandler.Done()
 	if client.cfg == nil {
 		return
@@ -70,11 +70,11 @@ func (client *client) notifyClientConnected() {
 	}
 }
 
-func (client *client) clientConnectionLostHandler(pahoClient MQTT.Client, err error) {
+func (client *honoClient) clientConnectionLostHandler(pahoClient MQTT.Client, err error) {
 	client.notifyClientConnectionLost(err)
 }
 
-func (client *client) notifyClientConnectionLost(err error) {
+func (client *honoClient) notifyClientConnectionLost(err error) {
 	if client.cfg == nil {
 		return
 	}
@@ -98,7 +98,7 @@ func (client *client) notifyClientConnectionLost(err error) {
 	}
 }
 
-func (client *client) publish(topic string, message *protocol.Envelope, qos byte, retained bool) error {
+func (client *honoClient) publish(topic string, message *protocol.Envelope, qos byte, retained bool) error {
 	payload, err := json.Marshal(message)
 	if err != nil {
 		return err

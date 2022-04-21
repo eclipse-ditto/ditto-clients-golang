@@ -20,8 +20,8 @@ import (
 // it's also provided to the handler so that chained responses to the ID can be later sent properly.
 type Handler func(requestID string, message *protocol.Envelope)
 
-// Client is the Ditto's library client interface definition. The interface is primarily to allow mocking tests.
-// Client has connect/disconnect capabilities along with the options to subscribe/unsubscribe
+// Client is the Ditto's library main interface definition. The interface is intended to abstract multiple implementations
+// over different transports. Client has connect/disconnect capabilities along with the options to subscribe/unsubscribe
 // for receiving all Ditto messages being exchanged using the underlying transport (MQTT/WS).
 type Client interface {
 

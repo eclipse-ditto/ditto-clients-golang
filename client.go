@@ -29,8 +29,8 @@ var (
 	ErrUnsubscribeTimeout = errors.New("unsubscribe timeout")
 )
 
-// client is the Ditto's library actual Client's implementation.
-type client struct {
+// honoClient is the Ditto's library Client's implementation over Hono(MQTT) transport.
+type honoClient struct {
 	cfg                *Configuration
 	pahoClient         MQTT.Client
 	handlers           map[string]Handler
@@ -45,7 +45,7 @@ func NewClient(cfg *Configuration) Client {
 		initCipherSutesMinVersion(cfg.tlsConfig)
 	}
 
-	client := &client{
+	client := &honoClient{
 		cfg:      cfg,
 		handlers: map[string]Handler{},
 	}
@@ -72,7 +72,7 @@ func NewClientMQTT(mqttClient MQTT.Client, cfg *Configuration) (Client, error) {
 		return nil, err
 	}
 
-	client := &client{
+	client := &honoClient{
 		cfg:                cfg,
 		pahoClient:         mqttClient,
 		externalMQTTClient: true,
@@ -90,7 +90,7 @@ func NewClientMQTT(mqttClient MQTT.Client, cfg *Configuration) (Client, error) {
 // The Client will be functional once this method returns without error. However, for consistency, if
 // there is a provided ConnectHandler, it will be notified.
 // In the case of an external MQTT client, if any error occurs during the internal preparations - it's returned here.
-func (client *client) Connect() error {
+func (client *honoClient) Connect() error {
 	if client.externalMQTTClient {
 		client.wgConnectHandler.Add(1)
 
@@ -137,7 +137,7 @@ func (client *client) Connect() error {
 // Disconnect in the case of an external MQTT client, only undoes internal preparations, otherwise - it also disconnects
 // the client from the configured Ditto endpoint. A call to Disconnect will cause a ConnectionLostHandler to be notified
 // only if an external MQTT client is used.
-func (client *client) Disconnect() {
+func (client *honoClient) Disconnect() {
 	var err error
 	token := client.pahoClient.Unsubscribe(honoMQTTTopicSubscribeCommands)
 	if token.WaitTimeout(client.cfg.unsubscribeTimeout) {
@@ -164,7 +164,7 @@ func (client *client) Disconnect() {
 // Reply is an auxiliary method to send replies for specific requestIDs if such has been provided along with the incoming protocol.Envelope.
 // The requestID must be the same as the one provided with the request protocol.Envelope.
 // An error is returned if the reply could not be sent for some reason.
-func (client *client) Reply(requestID string, message *protocol.Envelope) error {
+func (client *honoClient) Reply(requestID string, message *protocol.Envelope) error {
 	if err := client.publish(generateHonoResponseTopic(requestID, message.Status), message, 1, false); err != nil {
 		return err
 	}
@@ -172,7 +172,7 @@ func (client *client) Reply(requestID string, message *protocol.Envelope) error 
 }
 
 // Send sends a protocol.Envelope to the Client's configured Ditto endpoint.
-func (client *client) Send(message *protocol.Envelope) error {
+func (client *honoClient) Send(message *protocol.Envelope) error {
 	if err := client.publish(honoMQTTTopicPublishEvents, message, 1, false); err != nil {
 		return err
 	}
@@ -181,7 +181,7 @@ func (client *client) Send(message *protocol.Envelope) error {
 
 // Subscribe ensures that all incoming Ditto messages will be transferred to the provided Handlers.
 // As subscribing in Ditto is transport-specific - this is a lightweight version of a default subscription that is applicable in the MQTT use case.
-func (client *client) Subscribe(handlers ...Handler) {
+func (client *honoClient) Subscribe(handlers ...Handler) {
 	client.handlersLock.Lock()
 	defer client.handlersLock.Unlock()
 
@@ -197,7 +197,7 @@ func (client *client) Subscribe(handlers ...Handler) {
 // Unsubscribe cancels sending incoming Ditto messages from the client to the provided Handlers
 // and removes them from the subscriptions list of the client.
 // If Unsubscribe is called without arguments, it will cancel and remove all currently subscribed Handlers.
-func (client *client) Unsubscribe(handlers ...Handler) {
+func (client *honoClient) Unsubscribe(handlers ...Handler) {
 	client.handlersLock.Lock()
 	defer client.handlersLock.Unlock()
 

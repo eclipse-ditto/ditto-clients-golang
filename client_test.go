@@ -44,7 +44,7 @@ func TestNewClient(t *testing.T) {
 	}{
 		"test_new_client_empty_configuration": {
 			arg: &Configuration{},
-			want: &client{
+			want: &honoClient{
 				cfg:      &Configuration{},
 				handlers: map[string]Handler{},
 			},
@@ -53,7 +53,7 @@ func TestNewClient(t *testing.T) {
 			arg: &Configuration{
 				tlsConfig: &tls.Config{},
 			},
-			want: &client{
+			want: &honoClient{
 				cfg: &Configuration{
 					tlsConfig: &tls.Config{
 						CipherSuites: supportedCipherSuites(),
@@ -72,7 +72,7 @@ func TestNewClient(t *testing.T) {
 					},
 				},
 			},
-			want: &client{
+			want: &honoClient{
 				cfg: &Configuration{
 					tlsConfig: &tls.Config{
 						CipherSuites: []uint16{
@@ -91,7 +91,7 @@ func TestNewClient(t *testing.T) {
 					MinVersion: tls.VersionTLS13,
 				},
 			},
-			want: &client{
+			want: &honoClient{
 				cfg: &Configuration{
 					tlsConfig: &tls.Config{
 						CipherSuites: supportedCipherSuites(),
@@ -110,7 +110,7 @@ func TestNewClient(t *testing.T) {
 					MinVersion: tls.VersionTLS13,
 				},
 			},
-			want: &client{
+			want: &honoClient{
 				cfg: &Configuration{
 					tlsConfig: &tls.Config{
 						CipherSuites: []uint16{
@@ -221,7 +221,7 @@ func TestConnect(t *testing.T) {
 		mockExec mockExecConnect
 	}{
 		"test_external_mqtt_client_no_error": {
-			client: &client{
+			client: &honoClient{
 				cfg: &Configuration{
 					connectHandler: func(client Client) {
 						testWg.Done()
@@ -233,7 +233,7 @@ func TestConnect(t *testing.T) {
 			mockExec: mockExecConnectNoError,
 		},
 		"test_external_mqtt_client_error": {
-			client: &client{
+			client: &honoClient{
 				cfg:                &Configuration{},
 				pahoClient:         mockMQTTClient,
 				externalMQTTClient: true,
@@ -241,7 +241,7 @@ func TestConnect(t *testing.T) {
 			mockExec: mockExecConnectError,
 		},
 		"test_external_mqtt_client_timeout_error": {
-			client: &client{
+			client: &honoClient{
 				cfg:                &Configuration{},
 				pahoClient:         mockMQTTClient,
 				externalMQTTClient: true,
@@ -267,7 +267,7 @@ func TestDisconnectInternalClient(t *testing.T) {
 	setup(mockCtrl)
 
 	var cl Client
-	cl = &client{
+	cl = &honoClient{
 		cfg: &Configuration{
 			disconnectTimeout: defaultDisconnectTimeout,
 		},
@@ -297,7 +297,7 @@ func TestDisconnectExternalClient(t *testing.T) {
 		mockExec mockExecUnsubscribe
 	}{
 		"test_disconnect_with_error": {
-			client: &client{
+			client: &honoClient{
 				cfg: &Configuration{
 					connectionLostHandler: func(client Client, err error) {
 						testWg.Done()
@@ -309,7 +309,7 @@ func TestDisconnectExternalClient(t *testing.T) {
 			mockExec: mockExecUnsubscribeError,
 		},
 		"test_disconnect_without_error": {
-			client: &client{
+			client: &honoClient{
 				cfg: &Configuration{
 					connectionLostHandler: func(client Client, err error) {
 						testWg.Done()
@@ -341,7 +341,7 @@ func TestReply(t *testing.T) {
 	setup(mockCtrl)
 
 	var cl Client
-	cl = &client{
+	cl = &honoClient{
 		cfg:        &Configuration{},
 		pahoClient: mockMQTTClient,
 	}
@@ -386,7 +386,7 @@ func TestSend(t *testing.T) {
 	setup(mockCtrl)
 
 	var cl Client
-	cl = &client{
+	cl = &honoClient{
 		cfg:        &Configuration{},
 		pahoClient: mockMQTTClient,
 	}
@@ -431,7 +431,7 @@ func TestSubscribe(t *testing.T) {
 	}{
 		"test_client_handlers_nil": {
 			arg: nil,
-			testClient: &client{
+			testClient: &honoClient{
 				handlers: nil,
 			},
 			want: make(map[string]Handler),
@@ -440,7 +440,7 @@ func TestSubscribe(t *testing.T) {
 			arg: []Handler{
 				handler,
 			},
-			testClient: &client{},
+			testClient: &honoClient{},
 			want: map[string]Handler{
 				getHandlerName(handler): handler,
 			},
@@ -449,7 +449,7 @@ func TestSubscribe(t *testing.T) {
 			arg: []Handler{
 				secondHandler,
 			},
-			testClient: &client{
+			testClient: &honoClient{
 				handlers: map[string]Handler{
 					getHandlerName(handler): handler,
 				},
@@ -464,7 +464,7 @@ func TestSubscribe(t *testing.T) {
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			testCase.testClient.Subscribe(testCase.arg...)
-			handlers := testCase.testClient.(*client).handlers
+			handlers := testCase.testClient.(*honoClient).handlers
 			internal.AssertEqual(t, len(testCase.want), len(handlers))
 			for key, element := range testCase.want {
 				got := handlers[key]
@@ -487,7 +487,7 @@ func TestUnsubscribe(t *testing.T) {
 	}{
 		"test_remove_all_handlers": {
 			arg: []Handler{},
-			testClient: &client{
+			testClient: &honoClient{
 				handlers: map[string]Handler{
 					getHandlerName(handler):       handler,
 					getHandlerName(secondHandler): secondHandler,
@@ -497,7 +497,7 @@ func TestUnsubscribe(t *testing.T) {
 		},
 		"test_remove_nil_argument": {
 			arg: nil,
-			testClient: &client{
+			testClient: &honoClient{
 				handlers: map[string]Handler{
 					getHandlerName(handler):       handler,
 					getHandlerName(secondHandler): secondHandler,
@@ -509,7 +509,7 @@ func TestUnsubscribe(t *testing.T) {
 			arg: []Handler{
 				handler,
 			},
-			testClient: &client{
+			testClient: &honoClient{
 				handlers: map[string]Handler{
 					getHandlerName(handler):       handler,
 					getHandlerName(secondHandler): secondHandler,
@@ -522,7 +522,7 @@ func TestUnsubscribe(t *testing.T) {
 			arg: []Handler{
 				handler,
 			},
-			testClient: &client{
+			testClient: &honoClient{
 				handlers: map[string]Handler{
 					getHandlerName(secondHandler): secondHandler,
 				},
@@ -535,7 +535,7 @@ func TestUnsubscribe(t *testing.T) {
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			testCase.testClient.Unsubscribe(testCase.arg...)
-			handlers := testCase.testClient.(*client).handlers
+			handlers := testCase.testClient.(*honoClient).handlers
 			internal.AssertEqual(t, len(testCase.want), len(handlers))
 			for key, element := range testCase.want {
 				got := handlers[key]
@@ -553,7 +553,7 @@ func TestUnsubscribe(t *testing.T) {
 // NewClientMQTT -------------------------------------------------------------
 func mockExecNewClientMQTTNoErrors(mockMQTTClient *mock.MockClient, config *Configuration, _ string) (Client, error) {
 	mockMQTTClient.EXPECT().IsConnected().Return(true)
-	return &client{
+	return &honoClient{
 		cfg:                config,
 		pahoClient:         mockMQTTClient,
 		externalMQTTClient: true,

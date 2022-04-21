@@ -35,7 +35,7 @@ config := ditto.NewConfiguration().
     WithBroker("mqtt-host:1883").
     WithConnectHandler(connectHandler)
 
-func connectHandler(client *ditto.Client) {
+func connectHandler(client ditto.Client) {
     // add logic to be executed when the client is connected
 }
 ```
@@ -105,7 +105,7 @@ command = things.
 Subscribe for incoming Ditto messages.
 
 ```go
-func connectHandler(client *ditto.Client) {
+func connectHandler(client ditto.Client) {
     // it's a good practise to subscribe after the client is connected
     client.Subscribe(messagesHandler)
 }
@@ -114,7 +114,7 @@ func connectHandler(client *ditto.Client) {
 
 It's a good practice to clear all subscriptions on client disconnect.
 ```go
-func disconnect(client *ditto.Client) {
+func disconnect(client ditto.Client) {
     // add any resources clearing logic
     client.Unsubscribe()
     client.Disconnect()
