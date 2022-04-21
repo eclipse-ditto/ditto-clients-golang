@@ -16,13 +16,13 @@ import (
 )
 
 // Handler represents a callback handler that is called on each received message.
-// If the underlying transport (e.g. Hono) provides a special requestID related to the Envelope,
+// If the underlying transport provides a special requestID related to the Envelope,
 // it's also provided to the handler so that chained responses to the ID can be later sent properly.
 type Handler func(requestID string, message *protocol.Envelope)
 
 // Client is the Ditto's library main interface definition. The interface is intended to abstract multiple implementations
 // over different transports. Client has connect/disconnect capabilities along with the options to subscribe/unsubscribe
-// for receiving all Ditto messages being exchanged using the underlying transport (MQTT/WS).
+// for receiving all Ditto messages being exchanged using the underlying transport.
 type Client interface {
 
 	// Connect connects the client to the configured Ditto endpoint provided via the Client's Configuration at creation time.
@@ -45,7 +45,6 @@ type Client interface {
 	Send(message *protocol.Envelope) error
 
 	// Subscribe ensures that all incoming Ditto messages will be transferred to the provided Handlers.
-	// As subscribing in Ditto is transport-specific - this is a lightweight version of a default subscription that is applicable in the MQTT use case.
 	Subscribe(handlers ...Handler)
 
 	// Unsubscribe cancels sending incoming Ditto messages from the client to the provided Handlers
