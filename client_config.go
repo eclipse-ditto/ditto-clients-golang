@@ -27,10 +27,10 @@ const (
 
 // ConnectHandler is called when a successful connection to the configured Ditto endpoint is established and
 // all Client's internal preparations are done.
-type ConnectHandler func(client *Client)
+type ConnectHandler func(client Client)
 
 // ConnectionLostHandler is called is the connection is lost during runtime.
-type ConnectionLostHandler func(client *Client, err error)
+type ConnectionLostHandler func(client Client, err error)
 
 // Credentials represents a user credentials for authentication used by the underlying connection (e.g. MQTT).
 type Credentials struct {
