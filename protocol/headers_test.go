@@ -12,257 +12,854 @@
 package protocol
 
 import (
+	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/eclipse/ditto-clients-golang/internal"
 )
 
 func TestHeadersCorrelationID(t *testing.T) {
-	t.Run("TestHeadersCorrelationID", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderCorrelationID] = "correlation-id"
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		valueInMap interface{}
+		want       string
+	}{
+		"test_with_correlation_id": {
+			testHeader: Headers{HeaderCorrelationID: "correlation-id"},
+			valueInMap: "correlation-id",
+			want:       "correlation-id",
+		},
+		"test_empty_correlation_id": {
+			testHeader: Headers{HeaderCorrelationID: ""},
+			valueInMap: "",
+			want:       "",
+		},
+		"test_corrlation_id_number": {
+			testHeader: Headers{HeaderCorrelationID: 1},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_corrlation_ids_invalid_value": {
+			testHeader: Headers{
+				HeaderCorrelationID: 1,
+				"CORRELATION-ID":    "test",
+			},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_corrlation_ids_valid_value": {
+			testHeader: Headers{
+				HeaderCorrelationID: "1",
+				"CORRELATION-ID":    "test",
+			},
+			valueInMap: "1",
+			want:       "1",
+		},
+		"test_same_corrlation_ids": {
+			testHeader: Headers{
+				"correlation-ID": "1",
+				"CORRELATION-ID": "test",
+			},
+			valueInMap: nil,
+			want:       "test",
+		},
+	}
 
-		got := h.CorrelationID()
-		internal.AssertEqual(t, "correlation-id", got)
-
-		arg[HeaderCorrelationID] = nil
-
-		got = h.CorrelationID()
-		internal.AssertEqual(t, "", got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.CorrelationID()
+			internal.AssertEqual(t, testCase.want, got)
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderCorrelationID])
+		})
+	}
 }
 
 func TestHeadersTimeout(t *testing.T) {
-	t.Run("TestHeadersTimeout", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderTimeout] = "10"
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		want       time.Duration
+	}{
+		"test_with_timeout": {
+			testHeader: Headers{HeaderTimeout: "10s"},
+			want:       10 * time.Second,
+		},
+		"test_without_timeout": {
+			testHeader: Headers{},
+			want:       60 * time.Second,
+		},
+		"test_empty_timeout": {
+			testHeader: Headers{HeaderTimeout: ""},
+			want:       60 * time.Second,
+		},
+		"test_timeout_number": {
+			testHeader: Headers{HeaderTimeout: 1},
+			want:       60 * time.Second,
+		},
+		"test_same_timeout_invalid_value": {
+			testHeader: Headers{
+				HeaderTimeout: 1,
+				"TIMEOUT":     "10s",
+			},
+			want: 60 * time.Second,
+		},
+		"test_same_timeout_valid_value": {
+			testHeader: Headers{
+				HeaderTimeout: "1s",
+				"TIMEOUT":     "1s",
+			},
+			want: time.Second,
+		},
+		"test_same_timeout": {
+			testHeader: Headers{
+				"Timeout": "1",
+				"TIMEOUT": "5s",
+			},
+			want: 5 * time.Second,
+		},
+	}
 
-		got := h.Timeout()
-		internal.AssertEqual(t, "10", got)
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.Timeout()
+			internal.AssertEqual(t, testCase.want, got)
+		})
+	}
+}
 
-		arg[HeaderTimeout] = nil
-		got = h.Timeout()
-		internal.AssertEqual(t, "", got)
-	})
+func TestTimeoutValue(t *testing.T) {
+	tests := map[string]struct {
+		data string
+		want time.Duration
+	}{
+		"test_seconds": {
+			data: `{ "timeout": "10s" }`,
+			want: 10 * time.Second,
+		},
+		"test_milliseconds": {
+			data: `{ "timeout": "500ms" }`,
+			want: 500 * time.Millisecond,
+		},
+		"test_minute": {
+			data: `{ "timeout": "1m" }`,
+			want: time.Minute,
+		},
+		"test_without_unit_symbol": {
+			data: `{ "timeout": "10" }`,
+			want: 10 * time.Second,
+		},
+		"test_with_60_m_timeout": {
+			data: `{ "timeout": "60m" }`,
+			want: 60 * time.Second,
+		},
+		"test_with_3600_s_timeout": {
+			data: `{ "timeout": "3600" }`,
+			want: 60 * time.Second,
+		},
+		"test_with_negative_timeout": {
+			data: `{ "timeout": "-5" }`,
+			want: 60 * time.Second,
+		},
+		"test_with_empty_timeout": {
+			data: `{ "timeout": "" }`,
+			want: 60 * time.Second,
+		},
+		"test_with_invalid_timeout": {
+			data: `{ "timeout": "invalid" }`,
+			want: 60 * time.Second,
+		},
+	}
+
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			headers := NewHeaders()
+			json.Unmarshal([]byte(testCase.data), &headers)
+			internal.AssertEqual(t, testCase.want, headers.Timeout())
+		})
+	}
 }
 
 func TestHeadersIsResponseRequired(t *testing.T) {
-	t.Run("TestHeadersIsResponseRequired", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderResponseRequired] = false
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		want       bool
+		valueInMap interface{}
+	}{
+		"test_with_response_required_false": {
+			testHeader: Headers{HeaderResponseRequired: false},
+			want:       false,
+			valueInMap: false,
+		},
+		"test_with_response_required_true": {
+			testHeader: Headers{HeaderResponseRequired: true},
+			want:       true,
+			valueInMap: true,
+		},
+		"test_without_response_required": {
+			testHeader: Headers{},
+			valueInMap: nil,
+			want:       true,
+		},
+		"test_response_required_number": {
+			testHeader: Headers{HeaderResponseRequired: 1},
+			valueInMap: 1,
+			want:       true,
+		},
+		"test_same_response_required_invalid_value": {
+			testHeader: Headers{
+				HeaderResponseRequired: 1,
+				"RESPONSE-REQUIRED":    false,
+			},
+			valueInMap: 1,
+			want:       true,
+		},
+		"test_same_response_required_valid_value": {
+			testHeader: Headers{
+				HeaderResponseRequired: false,
+				"RESPONSE-REQUIRED":    true,
+			},
+			valueInMap: false,
+			want:       false,
+		},
+		"test_same_response_required": {
+			testHeader: Headers{
+				"Response-required": false,
+				"RESPONSE-REQUIRED": true,
+			},
+			valueInMap: nil,
+			want:       true,
+		},
+	}
 
-		got := h.IsResponseRequired()
-		internal.AssertFalse(t, got)
-
-		arg[HeaderResponseRequired] = nil
-		got = h.IsResponseRequired()
-		internal.AssertFalse(t, got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.IsResponseRequired()
+			internal.AssertEqual(t, testCase.want, got)
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderResponseRequired])
+		})
+	}
 }
 
 func TestHeadersChannel(t *testing.T) {
-	t.Run("TestHeadersChannel", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderChannel] = "1"
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		want       string
+		valueInMap interface{}
+	}{
+		"test_with_channel": {
+			testHeader: Headers{HeaderChannel: "1"},
+			want:       "1",
+			valueInMap: "1",
+		},
+		"test_without_channel": {
+			testHeader: Headers{},
+			want:       "",
+			valueInMap: nil,
+		},
+		"test_channel_number": {
+			testHeader: Headers{HeaderChannel: 1},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_channel_invalid_value": {
+			testHeader: Headers{
+				HeaderChannel:   1,
+				"DITTO-CHANNEL": "test-channel",
+			},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_channel_valid_value": {
+			testHeader: Headers{
+				HeaderChannel:   "test-channel",
+				"DITTO-CHANNEL": "new-test-channel",
+			},
+			valueInMap: "test-channel",
+			want:       "test-channel",
+		},
+		"test_same_channel": {
+			testHeader: Headers{
+				"Ditto-Channel": "test-channel",
+				"DITTO-CHANNEL": "new-test-channel",
+			},
+			valueInMap: nil,
+			want:       "new-test-channel",
+		},
+	}
 
-		got := h.Channel()
-		internal.AssertEqual(t, "1", got)
-
-		arg[HeaderChannel] = nil
-		got = h.Channel()
-		internal.AssertEqual(t, "", got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.Channel()
+			internal.AssertEqual(t, testCase.want, got)
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderChannel])
+		})
+	}
 }
 
 func TestHeadersIsDryRun(t *testing.T) {
-	t.Run("TestHeadersIsDryRun", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderDryRun] = false
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		want       bool
+		valueInMap interface{}
+	}{
+		"test_with_dry_run": {
+			testHeader: Headers{HeaderDryRun: true},
+			valueInMap: true,
+			want:       true,
+		},
+		"test_without_dry_run": {
+			testHeader: Headers{},
+			valueInMap: nil,
+			want:       false,
+		},
+		"test_dry_run_number": {
+			testHeader: Headers{HeaderDryRun: 1},
+			valueInMap: 1,
+			want:       false,
+		},
+		"test_same_dry_run_invalid_value": {
+			testHeader: Headers{
+				HeaderDryRun:    1,
+				"DITTO-DRY-RUN": "false",
+			},
+			valueInMap: 1,
+			want:       false,
+		},
+		"test_same_dry_run_valid_value": {
+			testHeader: Headers{
+				HeaderDryRun:    true,
+				"DITTO-DRY-RUN": true,
+			},
+			valueInMap: true,
+			want:       true,
+		},
+		"test_same_dry_run": {
+			testHeader: Headers{
+				"Ditto-Dry-Run": true,
+				"DITTO-DRY-RUN": false,
+			},
+			valueInMap: nil,
+			want:       false,
+		},
+	}
 
-		got := h.IsDryRun()
-		internal.AssertFalse(t, got)
-
-		arg[HeaderDryRun] = nil
-		got = h.IsDryRun()
-		internal.AssertFalse(t, got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.IsDryRun()
+			internal.AssertEqual(t, testCase.want, got)
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderDryRun])
+		})
+	}
 }
 
 func TestHeadersOrigin(t *testing.T) {
-	t.Run("TestHeadersOrigin", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderOrigin] = "origin"
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		valueInMap interface{}
+		want       string
+	}{
+		"test_with_origin": {
+			testHeader: Headers{HeaderOrigin: "origin"},
+			valueInMap: "origin",
+			want:       "origin",
+		},
+		"test_without_origin": {
+			testHeader: Headers{},
+			valueInMap: nil,
+			want:       "",
+		},
+		"test_origin_number": {
+			testHeader: Headers{HeaderOrigin: 1},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_origin_invalid_value": {
+			testHeader: Headers{
+				HeaderOrigin: 1,
+				"ORIGIN":     "test-origin",
+			},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_origin_valid_value": {
+			testHeader: Headers{
+				HeaderOrigin: "test-origin",
+				"ORIGIN":     "test-new-origin",
+			},
+			valueInMap: "test-origin",
+			want:       "test-origin",
+		},
+		"test_same_origin": {
+			testHeader: Headers{
+				"Origin": "test-origin",
+				"ORIGIN": "test-new-origin",
+			},
+			valueInMap: nil,
+			want:       "test-new-origin",
+		},
+	}
 
-		got := h.Origin()
-		internal.AssertEqual(t, "origin", got)
-
-		arg[HeaderOrigin] = nil
-		got = h.Origin()
-		internal.AssertEqual(t, "", got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.Origin()
+			internal.AssertEqual(t, testCase.want, got)
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderOrigin])
+		})
+	}
 }
 
 func TestHeadersOriginator(t *testing.T) {
-	t.Run("TestHeadersOriginator", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderOriginator] = "ditto-originator"
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		valueInMap interface{}
+		want       string
+	}{
+		"test_with_ditto_originator": {
+			testHeader: Headers{HeaderOriginator: "ditto-originator"},
+			valueInMap: "ditto-originator",
+			want:       "ditto-originator",
+		},
+		"test_without_ditto_originator": {
+			testHeader: Headers{},
+			valueInMap: nil,
+			want:       "",
+		},
+		"test_ditto_originator_number": {
+			testHeader: Headers{HeaderOriginator: 1},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_ditto_originator_invalid_value": {
+			testHeader: Headers{
+				HeaderOriginator:   1,
+				"DITTO-ORIGINATOR": "test-ditto-originator",
+			},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_ditto_originator_valid_value": {
+			testHeader: Headers{
+				HeaderOriginator:   "test-ditto-originator",
+				"DITTO-ORIGINATOR": "test-new-ditto-originator",
+			},
+			valueInMap: "test-ditto-originator",
+			want:       "test-ditto-originator",
+		},
+		"test_same_ditto_originator": {
+			testHeader: Headers{
+				"Ditto-Originator": "test-ditto-originator",
+				"DITTO-ORIGINATOR": "test-new-ditto-originator",
+			},
+			valueInMap: nil,
+			want:       "test-new-ditto-originator",
+		},
+	}
 
-		got := h.Originator()
-		internal.AssertEqual(t, "ditto-originator", got)
-
-		arg[HeaderOriginator] = nil
-		got = h.Originator()
-		internal.AssertEqual(t, "", got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.Originator()
+			internal.AssertEqual(t, testCase.want, got)
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderOriginator])
+		})
+	}
 }
 
 func TestHeadersETag(t *testing.T) {
-	t.Run("TestHeadersETag", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderETag] = "1"
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		valueInMap interface{}
+		want       string
+	}{
+		"test_with_etag": {
+			testHeader: Headers{HeaderETag: "test-etag"},
+			valueInMap: "test-etag",
+			want:       "test-etag",
+		},
+		"test_without_etag": {
+			testHeader: Headers{},
+			valueInMap: nil,
+			want:       "",
+		},
+		"test_etag_number": {
+			testHeader: Headers{HeaderETag: 1},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_etag_invalid_value": {
+			testHeader: Headers{
+				HeaderETag: 1,
+				"ETAG":     "test-etag",
+			},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_etag_valid_value": {
+			testHeader: Headers{
+				HeaderETag: "test-etag",
+				"ETAG":     "test-new-etag",
+			},
+			valueInMap: "test-etag",
+			want:       "test-etag",
+		},
+		"test_same_etag": {
+			testHeader: Headers{
+				"ETag": "test-etag",
+				"ETAG": "test-new-etag",
+			},
+			valueInMap: nil,
+			want:       "test-new-etag",
+		},
+	}
 
-		got := h.ETag()
-		internal.AssertEqual(t, "1", got)
-
-		arg[HeaderETag] = nil
-		got = h.ETag()
-		internal.AssertEqual(t, "", got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.ETag()
+			internal.AssertEqual(t, testCase.want, got)
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderETag])
+		})
+	}
 }
 
 func TestHeadersIfMatch(t *testing.T) {
-	t.Run("TestHeadersIfMatch", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderIfMatch] = "HeaderIfMatch"
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		valueInMap interface{}
+		want       string
+	}{
+		"test_with_if_match": {
+			testHeader: Headers{HeaderIfMatch: "test-if-match"},
+			valueInMap: "test-if-match",
+			want:       "test-if-match",
+		},
+		"test_without_if_match": {
+			testHeader: Headers{},
+			valueInMap: nil,
+			want:       "",
+		},
+		"test_if_match_number": {
+			testHeader: Headers{HeaderIfMatch: 1},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_if_match_invalid_value": {
+			testHeader: Headers{
+				HeaderIfMatch: 1,
+				"IF-MATCH":    "test-if-match",
+			},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_if_match_valid_value": {
+			testHeader: Headers{
+				HeaderIfMatch: "test-if-match",
+				"IF-MATCH":    "test-new-if-match",
+			},
+			valueInMap: "test-if-match",
+			want:       "test-if-match",
+		},
+		"test_same_if_match": {
+			testHeader: Headers{
+				"If-Match": "test-if-match",
+				"IF-MATCH": "test-new-if-match",
+			},
+			valueInMap: nil,
+			want:       "test-new-if-match",
+		},
+	}
 
-		got := h.IfMatch()
-		internal.AssertEqual(t, "HeaderIfMatch", got)
-
-		arg[HeaderIfMatch] = nil
-		got = h.IfMatch()
-		internal.AssertEqual(t, "", got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.IfMatch()
+			internal.AssertEqual(t, testCase.want, got)
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderIfMatch])
+		})
+	}
 }
 
 func TestHeadersIfNoneMatch(t *testing.T) {
-	t.Run("TestHeadersIfNoneMatch", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderIfNoneMatch] = "123"
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		valueInMap interface{}
+		want       string
+	}{
+		"test_with_if_none_match": {
+			testHeader: Headers{HeaderIfNoneMatch: "test-if-none-match"},
+			valueInMap: "test-if-none-match",
+			want:       "test-if-none-match",
+		},
+		"test_without_if_none_match": {
+			testHeader: Headers{},
+			valueInMap: nil,
+			want:       "",
+		},
+		"test_if_none_match_number": {
+			testHeader: Headers{HeaderIfNoneMatch: 1},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_if_none_match_invalid_value": {
+			testHeader: Headers{
+				HeaderIfNoneMatch: 1,
+				"IF-NONE-MATCH":   "test-if-none-match",
+			},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_if_none_match_valid_value": {
+			testHeader: Headers{
+				HeaderIfNoneMatch: "test-if-none-match",
+				"IF-NONE-mATCH":   "test-new-if-none-match",
+			},
+			valueInMap: "test-if-none-match",
+			want:       "test-if-none-match",
+		},
+		"test_same_if_none_match": {
+			testHeader: Headers{
+				"If-None-Match": "test-if-none-match",
+				"IF-NONE-MATCH": "test-new-if-none-match",
+			},
+			valueInMap: nil,
+			want:       "test-new-if-none-match",
+		},
+	}
 
-		got := h.IfNoneMatch()
-		internal.AssertEqual(t, "123", got)
-
-		arg[HeaderIfNoneMatch] = nil
-		got = h.IfNoneMatch()
-		internal.AssertEqual(t, "", got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.IfNoneMatch()
+			internal.AssertEqual(t, testCase.want, got)
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderIfNoneMatch])
+		})
+	}
 }
 
 func TestHeadersReplyTarget(t *testing.T) {
-	t.Run("TestHeadersReplyTarget", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderReplyTarget] = int64(123)
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		valueInMap interface{}
+		want       int64
+	}{
+		"test_with_reply_target": {
+			testHeader: Headers{HeaderReplyTarget: int64(123)},
+			valueInMap: int64(123),
+			want:       int64(123),
+		},
+		"test_without_reply_target": {
+			testHeader: Headers{},
+			valueInMap: nil,
+			want:       0,
+		},
+		"test_reply_target_string": {
+			testHeader: Headers{HeaderReplyTarget: "1"},
+			valueInMap: "1",
+			want:       0,
+		},
+		"test_same_reply_target_invalid_value": {
+			testHeader: Headers{
+				HeaderReplyTarget:    "1",
+				"DITTO-REPLY-TARGET": 1,
+			},
+			valueInMap: "1",
+			want:       0,
+		},
+		"test_same_reply_target_valid_value": {
+			testHeader: Headers{
+				HeaderReplyTarget:    int64(1),
+				"DITTO-REPLY-TARGET": "1",
+			},
+			valueInMap: int64(1),
+			want:       int64(1),
+		},
+		"test_same_reply_target": {
+			testHeader: Headers{
+				"Ditto-Reply-Target": int64(1),
+				"DITTO-REPLY-TARGET": int64(2),
+			},
+			valueInMap: nil,
+			want:       int64(2),
+		},
+	}
 
-		got := h.ReplyTarget()
-		internal.AssertEqual(t, int64(123), got)
-
-		arg[HeaderReplyTarget] = nil
-		got = h.ReplyTarget()
-		internal.AssertEqual(t, int64(0), got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.ReplyTarget()
+			internal.AssertEqual(t, testCase.want, got)
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderReplyTarget])
+		})
+	}
 }
 
 func TestHeadersReplyTo(t *testing.T) {
-	t.Run("TestHeadersReplyTo", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderReplyTo] = "someone"
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		valueInMap interface{}
+		want       string
+	}{
+		"test_with_reply_to": {
+			testHeader: Headers{HeaderReplyTo: "someone"},
+			valueInMap: "someone",
+			want:       "someone",
+		},
+		"test_without_reply_to": {
+			testHeader: Headers{},
+			valueInMap: nil,
+			want:       "",
+		},
+		"test_reply_to_number": {
+			testHeader: Headers{HeaderReplyTo: 1},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_reply_to_invalid_value": {
+			testHeader: Headers{
+				HeaderReplyTo: 1,
+				"REPLY-TO":    "test-reply-to",
+			},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_reply_to_valid_value": {
+			testHeader: Headers{
+				HeaderReplyTo: "test-reply-to",
+				"REPLY-TO":    "test-new-reply-to",
+			},
+			valueInMap: "test-reply-to",
+			want:       "test-reply-to",
+		},
+		"test_same_reply-to": {
+			testHeader: Headers{
+				"Reply-To": "test-reply-to",
+				"REPLY-TO": "test-new-reply-to",
+			},
+			valueInMap: nil,
+			want:       "test-new-reply-to",
+		},
+	}
 
-		got := h.ReplyTo()
-		internal.AssertEqual(t, "someone", got)
-
-		arg[HeaderReplyTo] = nil
-		got = h.ReplyTo()
-		internal.AssertEqual(t, "", got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.ReplyTo()
+			internal.AssertEqual(t, testCase.want, got)
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderReplyTo])
+		})
+	}
 }
 
 func TestHeadersVersion(t *testing.T) {
-	t.Run("TestHeadersVersion", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderSchemaVersion] = int64(1111)
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		valueInMap interface{}
+		want       int64
+	}{
+		"test_with_version": {
+			testHeader: Headers{HeaderVersion: int64(123)},
+			valueInMap: int64(123),
+			want:       int64(123),
+		},
+		"test_without_version": {
+			testHeader: Headers{},
+			valueInMap: nil,
+			want:       int64(2),
+		},
+		"test_version_string": {
+			testHeader: Headers{HeaderVersion: "1"},
+			valueInMap: "1",
+			want:       int64(2),
+		},
+		"test_same_version_invalid_value": {
+			testHeader: Headers{
+				HeaderVersion: "1",
+				"VERSION":     int64(1),
+			},
+			valueInMap: "1",
+			want:       int64(2),
+		},
+		"test_same_version_valid_value": {
+			testHeader: Headers{
+				HeaderVersion: int64(1),
+				"VERSION":     int64(2),
+			},
+			valueInMap: int64(1),
+			want:       int64(1),
+		},
+		"test_same_version": {
+			testHeader: Headers{
+				"Version": int64(12),
+				"VERSION": int64(3),
+			},
+			valueInMap: nil,
+			want:       int64(3),
+		},
+	}
 
-		got := h.Version()
-		internal.AssertEqual(t, int64(1111), got)
-
-		arg[HeaderSchemaVersion] = nil
-		got = h.Version()
-		internal.AssertEqual(t, int64(0), got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.Version()
+			internal.AssertEqual(t, testCase.want, got)
+			internal.AssertEqual(t, testCase.valueInMap, testCase.testHeader[HeaderVersion])
+		})
+	}
 }
 
 func TestHeadersContentType(t *testing.T) {
-	t.Run("TestHeadersContentType", func(t *testing.T) {
-		arg := make(map[string]interface{})
-		arg[HeaderContentType] = "HeaderContentType"
-		h := &Headers{
-			Values: arg,
-		}
+	tests := map[string]struct {
+		testHeader Headers
+		valueInMap interface{}
+		want       string
+	}{
+		"test_with_content_type": {
+			testHeader: Headers{HeaderContentType: "test-content-type"},
+			valueInMap: "test-content-type",
+			want:       "test-content-type",
+		},
+		"test_without_content_type": {
+			testHeader: Headers{},
+			valueInMap: nil,
+			want:       "",
+		},
+		"test_content_type_number": {
+			testHeader: Headers{HeaderContentType: 1},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_content_type_invalid_value": {
+			testHeader: Headers{
+				HeaderContentType: 1,
+				"CONTENT-TYPE":    "test-content-type",
+			},
+			valueInMap: 1,
+			want:       "",
+		},
+		"test_same_content_type_valid_value": {
+			testHeader: Headers{
+				HeaderContentType: "test-content-type",
+				"CONTENT-TYPE":    "test-new-content-type",
+			},
+			valueInMap: "test-content-type",
+			want:       "test-content-type",
+		},
+		"test_same_content_type": {
+			testHeader: Headers{
+				"Content-Type": "test-content-type",
+				"CONTENT-TYPE": "test-new-content-type",
+			},
+			valueInMap: nil,
+			want:       "test-new-content-type",
+		},
+	}
 
-		got := h.ContentType()
-		internal.AssertEqual(t, "HeaderContentType", got)
-
-		arg[HeaderContentType] = nil
-		got = h.ContentType()
-		internal.AssertEqual(t, "", got)
-	})
+	for testName, testCase := range tests {
+		t.Run(testName, func(t *testing.T) {
+			got := testCase.testHeader.ContentType()
+			internal.AssertEqual(t, testCase.want, got)
+		})
+	}
 }
 
 func TestHeadersGeneric(t *testing.T) {
 	t.Run("TestHeadersGeneric", func(t *testing.T) {
 		arg := make(map[string]interface{})
 		arg[HeaderContentType] = "HeaderContentType"
-		h := &Headers{
-			Values: arg,
-		}
+		h := Headers{HeaderContentType: "HeaderContentType"}
 
 		got := h.Generic(HeaderContentType)
 		internal.AssertEqual(t, arg[HeaderContentType], got)
@@ -293,8 +890,7 @@ func TestHeadersMarshalJSON(t *testing.T) {
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
-			h := &Headers{testCase.data}
-			got, err := h.MarshalJSON()
+			got, err := json.Marshal(testCase.data)
 			if testCase.wantErr {
 				if err == nil {
 					t.Errorf("Headers.MarshalJSON() error must not be nil")
@@ -309,35 +905,57 @@ func TestHeadersMarshalJSON(t *testing.T) {
 }
 
 func TestHeadersUnmarshalJSON(t *testing.T) {
-	ct := "application/json"
-
 	tests := map[string]struct {
-		data    string
-		wantErr bool
+		data string
+		want Headers
 	}{
-		"test_headers_unmarshal_JSON_ok": {
-			data:    "{\"content-type\":\"application/json\"}",
-			wantErr: false,
+		"test_headers_unmarshal_JSON_with_one_heder": {
+			data: `{"content-type":"application/json"}`,
+			want: Headers{HeaderContentType: "application/json"},
+		},
+		"test_headers_unmarshal_JSON_with_many_headers": {
+			data: `{
+				"content-type":"application/json",
+				"timeout": "30ms",
+				"response-required":false
+			}`,
+			want: Headers{
+				HeaderContentType:      "application/json",
+				HeaderTimeout:          "30ms",
+				HeaderResponseRequired: false,
+			},
 		},
 		"test_headers_unmarshal_JSON_err": {
-			data:    "",
-			wantErr: true,
+			data: "",
+			want: Headers{},
 		},
 	}
 
 	for testName, testCase := range tests {
 		t.Run(testName, func(t *testing.T) {
 			got := NewHeaders()
-			err := got.UnmarshalJSON([]byte(testCase.data))
-			if testCase.wantErr {
-				if err == nil {
-					t.Errorf("Headers.UnmarshalJSON() error must not be nil")
-				}
-			} else {
-				if got.ContentType() != ct {
-					t.Errorf("Headers.UnmarshalJSON() got = %v, want %v", got.ContentType(), ct)
-				}
-			}
+			json.Unmarshal([]byte(testCase.data), &got)
+			internal.AssertEqual(t, testCase.want, got)
 		})
 	}
+}
+
+func TestCaseInsensitiveKey(t *testing.T) {
+	headers := Headers{HeaderCorrelationID: "correlation-id-1"}
+	envelope := &Envelope{
+		Headers: headers,
+	}
+
+	envelope.WithHeaders(NewHeaders(WithGeneric("coRRelation-ID", "correlation-id-2")))
+
+	// return the first correlation-id (side effect from unmarshal JSON)
+	internal.AssertEqual(t, "correlation-id-2", envelope.Headers.CorrelationID())
+
+	json.Marshal(envelope.Headers)
+
+	data := `{
+	    "correlation-iD":"correlation-id-3"
+	}`
+	json.Unmarshal([]byte(data), &envelope.Headers)
+	internal.AssertEqual(t, "correlation-id-3", envelope.Headers["correlation-iD"])
 }

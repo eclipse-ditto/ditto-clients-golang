@@ -269,14 +269,10 @@ func TestEventEnvelope(t *testing.T) {
 				protocol.WithChannel("testChannel"),
 			},
 			want: &protocol.Envelope{
-				Topic: event.Topic,
-				Path:  event.Path,
-				Value: event.Payload,
-				Headers: &protocol.Headers{
-					Values: map[string]interface{}{
-						protocol.HeaderChannel: "testChannel",
-					},
-				},
+				Topic:   event.Topic,
+				Path:    event.Path,
+				Value:   event.Payload,
+				Headers: protocol.Headers{protocol.HeaderChannel: "testChannel"},
 			},
 		},
 	}
